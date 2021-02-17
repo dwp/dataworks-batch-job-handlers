@@ -12,3 +12,4 @@ aviator_pipeline.yml
 **/dist/
 **/tests/__pycache__/
 **/*.egg-info/
+**/.vscode/

@@ -29,7 +29,7 @@ CRITICAL_SEVERITY = "Critical"
 HIGH_SEVERITY = "High"
 MEDIUM_SEVERITY = "Medium"
 
-PDM_JOB_QUEUE = "test_pdm_object_tagger"
+PDM_JOB_QUEUE = "test/pdm_object_tagger"
 OTHER_JOB_QUEUE = "test_queue"
 JOB_NAME = "test job"
 
@@ -55,6 +55,7 @@ class TestRetriever(unittest.TestCase):
         mock_logger,
         get_sns_client_mock,
         get_parameters_mock,
+        setup_logging_mock,
         get_and_validate_job_details_mock,
         get_severity_mock,
         get_notification_type_mock,
@@ -100,18 +101,18 @@ class TestRetriever(unittest.TestCase):
 
         get_and_validate_job_details_mock.assert_called_once_with(event)
         get_severity_mock_mock.assert_called_once_with(
-            PDM_JOB_QUEUE, 
-            SUCCEEDED_JOB_STATUS, 
+            PDM_JOB_QUEUE,
+            SUCCEEDED_JOB_STATUS,
             JOB_NAME,
         )
         get_notification_type_mock.assert_called_once_with(
-            PDM_JOB_QUEUE, 
-            SUCCEEDED_JOB_STATUS, 
+            PDM_JOB_QUEUE,
+            SUCCEEDED_JOB_STATUS,
             JOB_NAME,
         )
         generate_monitoring_message_payload_mock.assert_called_once_with(
-            PDM_JOB_QUEUE, 
-            SUCCEEDED_JOB_STATUS, 
+            PDM_JOB_QUEUE,
+            SUCCEEDED_JOB_STATUS,
             JOB_NAME,
             CRITICAL_SEVERITY,
             INFORMATION_NOTIFICATION_TYPE,
@@ -120,8 +121,8 @@ class TestRetriever(unittest.TestCase):
             sns_client_mock,
             payload,
             args.sns_topic,
-            PDM_JOB_QUEUE, 
-            SUCCEEDED_JOB_STATUS, 
+            PDM_JOB_QUEUE,
+            SUCCEEDED_JOB_STATUS,
             JOB_NAME,
         )
 
@@ -141,6 +142,7 @@ class TestRetriever(unittest.TestCase):
         mock_logger,
         get_sns_client_mock,
         get_parameters_mock,
+        setup_logging_mock,
         get_and_validate_job_details_mock,
         get_severity_mock,
         get_notification_type_mock,
@@ -159,7 +161,7 @@ class TestRetriever(unittest.TestCase):
         }
 
         get_and_validate_job_details_mock.return_value = details_dict
-        
+
         event = {
             "test_key": "test_value",
         }
@@ -373,7 +375,6 @@ class TestRetriever(unittest.TestCase):
     def test_job_is_invalid_with_no_job_name_field(self, mock_logger):
         message = {
             "detail": {
-                JOB_NAME_KEY: JOB_NAME,
                 JOB_STATUS_KEY: SUCCEEDED_JOB_STATUS,
                 JOB_QUEUE_KEY: PDM_JOB_QUEUE,
             }
