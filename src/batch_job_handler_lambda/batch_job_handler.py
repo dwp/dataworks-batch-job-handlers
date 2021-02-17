@@ -145,8 +145,8 @@ def handler(event, context):
 
     if job_status in IGNORED_JOB_STATUSES:
         logger.info(
-            f'Exiting normally as job status warrants no notification", ' +
-            f'"job_name": "{job_name}, "job_queue": "{job_queue}, "job_status": "{job_status}'
+            f'Exiting normally as job status warrants no notification", '
+            + f'"job_name": "{job_name}, "job_queue": "{job_queue}, "job_status": "{job_status}'
         )
         sys.exit(0)
 
@@ -202,8 +202,8 @@ def generate_monitoring_message_payload(
 
     dumped_payload = get_escaped_json_string(payload)
     logger.info(
-        f'Generated monitoring SNS payload", "payload": {dumped_payload}, ' +
-        f'"job_queue": "{job_queue}, "job_name": "{job_name}, "job_status": "{job_status}'
+        f'Generated monitoring SNS payload", "payload": {dumped_payload}, '
+        + f'"job_queue": "{job_queue}, "job_name": "{job_name}, "job_status": "{job_status}'
     )
 
     return payload
@@ -234,8 +234,8 @@ def send_sns_message(
 
     dumped_payload = get_escaped_json_string(payload)
     logger.info(
-        f'Publishing payload to SNS", "payload": {dumped_payload}, "sns_topic_arn": "{sns_topic_arn}", ' +
-        f'"job_queue": "{job_queue}, "job_name": "{job_name}, "job_status": "{job_status}'
+        f'Publishing payload to SNS", "payload": {dumped_payload}, "sns_topic_arn": "{sns_topic_arn}", '
+        + f'"job_queue": "{job_queue}, "job_name": "{job_name}, "job_status": "{job_status}'
     )
 
     return sns_client.publish(TopicArn=sns_topic_arn, Message=json_message)
@@ -251,8 +251,8 @@ def get_and_validate_job_details(event):
 
     dumped_message = get_escaped_json_string(message)
     logger.info(
-        f'Validating message", "message": {dumped_message}, ' +
-        f'"job_queue": "{job_queue}, "job_name": "{job_name}, "job_status": "{job_status}'
+        f'Validating message", "message": {dumped_message}, '
+        + f'"job_queue": "{job_queue}, "job_name": "{job_name}, "job_status": "{job_status}'
     )
 
     if "detail" not in message:
@@ -266,8 +266,8 @@ def get_and_validate_job_details(event):
             raise KeyError(f"Details dict contains no '{required_key}' key")
 
     logger.info(
-        f'Message has been validated", "message": {dumped_message}, "job_queue": "{details_dict[JOB_QUEUE_KEY]}, ' +
-        f'"job_name": "{details_dict[JOB_NAME_KEY]}, "job_status": "{details_dict[JOB_STATUS_KEY]}'
+        f'Message has been validated", "message": {dumped_message}, "job_queue": "{details_dict[JOB_QUEUE_KEY]}, '
+        + f'"job_name": "{details_dict[JOB_NAME_KEY]}, "job_status": "{details_dict[JOB_STATUS_KEY]}'
     )
 
     return details_dict
@@ -291,10 +291,10 @@ def get_severity(job_queue, job_status, job_name):
             if REGEX_PDM_OBJECT_TAGGING_JOB_QUEUE_ARN.match(job_queue)
             else HIGH_SEVERITY
         )
-    
+
     logger.info(
-        f'Generated severity", "severity": "{severity}", "job_name": "{job_name}, ' +
-        f'"job_queue": "{job_queue}, "job_name": "{job_name}, "job_status": "{job_status}'
+        f'Generated severity", "severity": "{severity}", "job_name": "{job_name}, '
+        + f'"job_queue": "{job_queue}, "job_name": "{job_name}, "job_status": "{job_status}'
     )
 
     return severity
@@ -316,10 +316,10 @@ def get_notification_type(job_queue, job_status, job_name):
             if REGEX_PDM_OBJECT_TAGGING_JOB_QUEUE_ARN.match(job_queue)
             else WARNING_NOTIFICATION_TYPE
         )
-    
+
     logger.info(
-        f'Generated notification type", "notification_type": "{notification_type}", ' +
-        f'"job_queue": "{job_queue}, "job_name": "{job_name}, "job_status": "{job_status}'
+        f'Generated notification type", "notification_type": "{notification_type}", '
+        + f'"job_queue": "{job_queue}, "job_name": "{job_name}, "job_status": "{job_status}'
     )
 
     return notification_type
