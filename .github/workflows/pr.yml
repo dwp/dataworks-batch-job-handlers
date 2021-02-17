@@ -1,47 +1,9 @@
-name: PR
+name: Perform Python Format
 
-on:
-  pull_request:
-    paths-ignore:
-      - 'ci/**'
-      - '**/*.md'
-
-env:
-  IMAGE_NAME: dwpdigital/dataworks-batch-job-handlers
+on: pull_request
 
 jobs:
-  docker-build-and-scan:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - name: Build Docker image
-        run: docker build -t ${{ env.IMAGE_NAME }}:latest .
-      - name: Run Snyk to check image for high vulnerabilities
-        uses: snyk/actions/docker@master
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-        with:
-          image: ${{ env.IMAGE_NAME }}
-          args: --file=Dockerfile --policy-path=./.snyk --severity-threshold=high --exclude-base-image-vulns --org=dwp-dataworks
-
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v1
-
-      - name: Set up Python 3.8
-        uses: actions/setup-python@v1
-        with:
-          python-version: 3.8
-
-      - name: Run tests
-        run: |
-          pip install -r requirements.txt
-          # python -m pytest -v
-  
-
-  format:
+  build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -54,6 +16,9 @@ jobs:
 
       - name: Install Black
         run: pip install black
+
+      - name: Install Tox
+        run: pip install tox
 
       - name: Run black --check .
         id: check-formatting
@@ -71,3 +36,5 @@ jobs:
           git commit -am "Fixup: Format Python code with Black"
           git push
 
+      - name: unit-tests
+        run: make unittest
