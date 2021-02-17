@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-"""Batch Job Lambda."""
+"""batch_job_handler_lambda"""
 import argparse
 import boto3
 import json
@@ -36,6 +36,9 @@ TRIMMER_JOB_NAME = re.compile("^.*/k2hb_reconciliation_trimmer$")
 REGEX_TRIMMER_JOB_QUEUE_ARN = re.compile("^.*/k2hb_reconciliation_trimmer$")
 
 log_level = os.environ["LOG_LEVEL"].upper() if "LOG_LEVEL" in os.environ else "INFO"
+
+args = None
+logger = None
 
 
 # Initialise logging
@@ -107,8 +110,8 @@ def get_parameters():
     return _args
 
 
-args = get_parameters()
-logger = setup_logging(log_level)
+def get_sns_client():
+    return boto3.client("sns")
 
 
 def handler(event, context):
@@ -119,18 +122,16 @@ def handler(event, context):
         context (Object): The context info from AWS
 
     """
+    global args
+    global logger
+
+    args = get_parameters()
+    logger = setup_logging(args.log_level)
 
     dumped_event = get_escaped_json_string(event)
     logger.info(f'SNS Event", "sns_event": {dumped_event}, "mode": "handler')
 
-    try:
-        boto3.setup_default_session(
-            profile_name=args.aws_profile, region_name=args.aws_region
-        )
-    except Exception as e:
-        logger.error(e)
-
-    sns_client = boto3.client("sns")
+    sns_client = get_sns_client()
 
     if not args.sns_topic:
         raise Exception("Required argument SNS_TOPIC is unset")

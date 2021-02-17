@@ -14,7 +14,7 @@ After cloning this repo, please run:
 |AWS_PROFILE| default |The profile for making AWS calls to other services|No|
 |AWS_REGION| eu-west-1 |The region the lambda is running in|No|
 |ENVIRONMENT| dev |The environment the lambda is running in|No|
-|APPLICATION| snapshot-sender-status-checker |The name of the application|No|
+|APPLICATION| batch-job-handler |The name of the application|No|
 |LOG_LEVEL| INFO |The logging level of the Lambda|No|
 |SNS_TOPIC_ARN|The arn of the sns topic to send monitoring messages to|Yes|
 

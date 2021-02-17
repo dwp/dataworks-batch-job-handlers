@@ -3,7 +3,7 @@
 import setuptools
 
 setuptools.setup(
-    name="batch_job_handler_lambda",
+    name="batch-job-handlers",
     version="0.0.1",
     author="DWP DataWorks",
     author_email="dataworks@digital.uc.dwp.gov.uk",
