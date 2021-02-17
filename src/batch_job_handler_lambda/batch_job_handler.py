@@ -251,9 +251,7 @@ def get_and_validate_job_details(event):
     message = json.loads(event["Records"][0]["Sns"]["Message"])
 
     dumped_message = get_escaped_json_string(message)
-    logger.info(
-        f'Validating message", "message": {dumped_message}'
-    )
+    logger.info(f'Validating message", "message": {dumped_message}')
 
     if "detail" not in message:
         raise KeyError("Message contains no 'detail' key")

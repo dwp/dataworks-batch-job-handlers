@@ -42,10 +42,14 @@ args.log_level = "INFO"
 
 class TestRetriever(unittest.TestCase):
     @mock.patch("batch_job_handler_lambda.batch_job_handler.send_sns_message")
-    @mock.patch("batch_job_handler_lambda.batch_job_handler.generate_monitoring_message_payload")
+    @mock.patch(
+        "batch_job_handler_lambda.batch_job_handler.generate_monitoring_message_payload"
+    )
     @mock.patch("batch_job_handler_lambda.batch_job_handler.get_notification_type")
     @mock.patch("batch_job_handler_lambda.batch_job_handler.get_severity")
-    @mock.patch("batch_job_handler_lambda.batch_job_handler.get_and_validate_job_details")
+    @mock.patch(
+        "batch_job_handler_lambda.batch_job_handler.get_and_validate_job_details"
+    )
     @mock.patch("batch_job_handler_lambda.batch_job_handler.setup_logging")
     @mock.patch("batch_job_handler_lambda.batch_job_handler.get_parameters")
     @mock.patch("batch_job_handler_lambda.batch_job_handler.get_sns_client")
@@ -125,13 +129,16 @@ class TestRetriever(unittest.TestCase):
             SUCCEEDED_JOB_STATUS,
             JOB_NAME,
         )
-
-
+    
     @mock.patch("batch_job_handler_lambda.batch_job_handler.send_sns_message")
-    @mock.patch("batch_job_handler_lambda.batch_job_handler.generate_monitoring_message_payload")
+    @mock.patch(
+        "batch_job_handler_lambda.batch_job_handler.generate_monitoring_message_payload"
+    )
     @mock.patch("batch_job_handler_lambda.batch_job_handler.get_notification_type")
     @mock.patch("batch_job_handler_lambda.batch_job_handler.get_severity")
-    @mock.patch("batch_job_handler_lambda.batch_job_handler.get_and_validate_job_details")
+    @mock.patch(
+        "batch_job_handler_lambda.batch_job_handler.get_and_validate_job_details"
+    )
     @mock.patch("batch_job_handler_lambda.batch_job_handler.setup_logging")
     @mock.patch("batch_job_handler_lambda.batch_job_handler.get_parameters")
     @mock.patch("batch_job_handler_lambda.batch_job_handler.get_sns_client")
@@ -170,7 +177,6 @@ class TestRetriever(unittest.TestCase):
         assert pytest_wrapped_e.type == SystemExit
         assert pytest_wrapped_e.value.code == 0
 
-
     @mock.patch("batch_job_handler_lambda.batch_job_handler.logger")
     def test_sns_payload_generates_valid_payload(self, mock_logger):
         expected_payload = {
@@ -191,7 +197,6 @@ class TestRetriever(unittest.TestCase):
             INFORMATION_NOTIFICATION_TYPE,
         )
         self.assertEqual(expected_payload, actual_payload)
-
 
     @mock.patch("batch_job_handler_lambda.batch_job_handler.logger")
     def test_send_sns_message_sends_right_message(
@@ -216,7 +221,6 @@ class TestRetriever(unittest.TestCase):
             TopicArn=SNS_TOPIC_ARN, Message='{"test_key": "test_value"}'
         )
 
-
     @mock.patch("batch_job_handler_lambda.batch_job_handler.logger")
     def test_get_notification_type_returns_error_for_failed_pdm_job(self, mock_logger):
         expected = ERROR_NOTIFICATION_TYPE
@@ -227,7 +231,6 @@ class TestRetriever(unittest.TestCase):
         )
 
         self.assertEqual(expected, actual)
-
 
     @mock.patch("batch_job_handler_lambda.batch_job_handler.logger")
     def test_get_notification_type_returns_error_for_failed_other_job(
@@ -242,7 +245,6 @@ class TestRetriever(unittest.TestCase):
 
         self.assertEqual(expected, actual)
 
-
     @mock.patch("batch_job_handler_lambda.batch_job_handler.logger")
     def test_get_notification_type_returns_information_for_non_failed_pdm_job(
         self, mock_logger
@@ -256,7 +258,6 @@ class TestRetriever(unittest.TestCase):
 
         self.assertEqual(expected, actual)
 
-
     @mock.patch("batch_job_handler_lambda.batch_job_handler.logger")
     def test_get_notification_type_returns_information_for_non_failed_other_job(
         self, mock_logger
@@ -269,7 +270,6 @@ class TestRetriever(unittest.TestCase):
         )
 
         self.assertEqual(expected, actual)
-
 
     @mock.patch("batch_job_handler_lambda.batch_job_handler.logger")
     def test_get_severity_returns_critical_for_failed_pdm_job(self, mock_logger):
