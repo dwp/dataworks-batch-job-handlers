@@ -1,44 +1,44 @@
 resources:
-  - name: dwpdigital-dataworks-repo-template-docker
+  - name: dwpdigital-dataworks-batch-job-handlers
     type: registry-image-resource
     source:
-      repository: dwpdigital/dataworks-repo-template-docker
+      repository: dwpdigital/dataworks-batch-job-handlers
     check_every: 5m
 
-  - name: ecr-dwpdigital-dataworks-repo-template-docker-dev
+  - name: ecr-dwpdigital-dataworks-batch-job-handlers-dev
     .: (( inject meta.resources.ecr-resource ))
     source:
-      repository: "dataworks-repo-template-docker"
+      repository: "dataworks-batch-job-handlers"
 
-  - name: ecr-dwpdigital-dataworks-repo-template-docker
+  - name: ecr-dwpdigital-dataworks-batch-job-handlers
     .: (( inject meta.resources.ecr-resource ))
     source:
-      repository: "dataworks-repo-template-docker"
+      repository: "dataworks-batch-job-handlers"
       aws_role_arn: arn:aws:iam::((dataworks.aws_management_acc)):role/ci
 
 jobs:
-  - name: mirror-dwpdigital-dataworks-repo-template-docker-dev
-    serial_groups: [dataworks-repo-template-docker]
+  - name: mirror-dwpdigital-dataworks-batch-job-handlers-dev
+    serial_groups: [dataworks-batch-job-handlers]
     plan:
-      - get: dwpdigital-dataworks-repo-template-docker
+      - get: dwpdigital-dataworks-batch-job-handlers
         trigger: true
         params:
           format: oci
         attempts: 3
-      - put: ecr-dwpdigital-dataworks-repo-template-docker-dev
+      - put: ecr-dwpdigital-dataworks-batch-job-handlers-dev
         params:
-          image: "dwpdigital-dataworks-repo-template-docker/image.tar"
+          image: "dwpdigital-dataworks-batch-job-handlers/image.tar"
         attempts: 3
 
-  - name: mirror-dwpdigital-dataworks-repo-template-docker
-    serial_groups: [dataworks-repo-template-docker]
+  - name: mirror-dwpdigital-dataworks-batch-job-handlers
+    serial_groups: [dataworks-batch-job-handlers]
     plan:
-      - get: dwpdigital-dataworks-repo-template-docker
+      - get: dwpdigital-dataworks-batch-job-handlers
         trigger: true
         params:
           format: oci
         attempts: 3
-      - put: ecr-dwpdigital-dataworks-repo-template-docker
+      - put: ecr-dwpdigital-dataworks-batch-job-handlers
         params:
-          image: "dwpdigital-dataworks-repo-template-docker/image.tar"
+          image: "dwpdigital-dataworks-batch-job-handlers/image.tar"
         attempts: 3

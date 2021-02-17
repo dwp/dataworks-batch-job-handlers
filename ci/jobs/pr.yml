@@ -1,29 +1,29 @@
 jobs:
-  - name: dataworks-repo-template-docker-pr
+  - name: dataworks-batch-job-handlers-pr
     plan:
-      - get: dataworks-repo-template-docker-pr
+      - get: dataworks-batch-job-handlers-pr
         trigger: true
         version: every
-      - put: dataworks-repo-template-docker-pr
+      - put: dataworks-batch-job-handlers-pr
         params:
-          path: dataworks-repo-template-docker-pr
+          path: dataworks-batch-job-handlers-pr
           status: pending
       - .: (( inject meta.plan.terraform-bootstrap ))
         input_mapping:
-          dataworks-repo-template-docker: dataworks-repo-template-docker-pr
+          dataworks-batch-job-handlers: dataworks-batch-job-handlers-pr
       - .: (( inject meta.plan.terraform-plan ))
         input_mapping:
-          dataworks-repo-template-docker: dataworks-repo-template-docker-pr
+          dataworks-batch-job-handlers: dataworks-batch-job-handlers-pr
         params:
           TF_WORKSPACE: "management"
           DETAILED_EXITCODE: ""
         on_failure:
-          put: dataworks-repo-template-docker-pr
+          put: dataworks-batch-job-handlers-pr
           params:
-            path: dataworks-repo-template-docker-pr
+            path: dataworks-batch-job-handlers-pr
             status: failure
         on_success:
-          put: dataworks-repo-template-docker-pr
+          put: dataworks-batch-job-handlers-pr
           params:
-            path: dataworks-repo-template-docker-pr
+            path: dataworks-batch-job-handlers-pr
             status: success
