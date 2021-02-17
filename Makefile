@@ -21,7 +21,7 @@ git-hooks: ## Set up hooks in .githooks
 setup-local:
 	virtualenv --python=python3.8 venv
 	source venv/bin/activate
-	pip install -r requirements.txt
+	pip3 install -r requirements.txt
 
 env-vars: ## Make env vars required by application
 	@{ \
@@ -37,7 +37,7 @@ unittest:
 deployable:
 	rm -rf artifacts
 	mkdir artifacts
-	pip install -r requirements.txt -t artifacts
+	pip3 install -r requirements.txt -t artifacts
 	cp src/batch_job_handler_lambda/*.py artifacts/
 	cd artifacts && zip -r ../batch-job-handler-development.zip ./ && cd -
 
