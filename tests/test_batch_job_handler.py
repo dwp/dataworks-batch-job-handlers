@@ -63,7 +63,7 @@ class TestRetriever(unittest.TestCase):
         send_sns_message_mock,
     ):
         sns_client_mock = mock.MagicMock()
-        get_sns_client_mock = sns_client_mock
+        get_sns_client_mock.return_value = sns_client_mock
         get_parameters_mock.return_value = args
 
         details_dict = {
@@ -100,7 +100,7 @@ class TestRetriever(unittest.TestCase):
         setup_logging_mock.assert_called_once()
 
         get_and_validate_job_details_mock.assert_called_once_with(event)
-        get_severity_mock_mock.assert_called_once_with(
+        get_severity_mock.assert_called_once_with(
             PDM_JOB_QUEUE,
             SUCCEEDED_JOB_STATUS,
             JOB_NAME,
@@ -127,7 +127,6 @@ class TestRetriever(unittest.TestCase):
         )
 
 
-    @pytest.mark.parametrize("status", [PENDING_JOB_STATUS, RUNNABLE_JOB_STATUS, STARTING_JOB_STATUS])
     @mock.patch("batch_job_handler_lambda.batch_job_handler.send_sns_message")
     @mock.patch("batch_job_handler_lambda.batch_job_handler.generate_monitoring_message_payload")
     @mock.patch("batch_job_handler_lambda.batch_job_handler.get_notification_type")
@@ -148,7 +147,6 @@ class TestRetriever(unittest.TestCase):
         get_notification_type_mock,
         generate_monitoring_message_payload_mock,
         send_sns_message_mock,
-        status,
     ):
         sns_client_mock = mock.MagicMock()
         get_sns_client_mock = sns_client_mock
@@ -156,7 +154,7 @@ class TestRetriever(unittest.TestCase):
 
         details_dict = {
             JOB_NAME_KEY: JOB_NAME,
-            JOB_STATUS_KEY: status,
+            JOB_STATUS_KEY: PENDING_JOB_STATUS,
             JOB_QUEUE_KEY: PDM_JOB_QUEUE,
         }
 
@@ -166,18 +164,11 @@ class TestRetriever(unittest.TestCase):
             "test_key": "test_value",
         }
 
-        batch_job_handler.handler(event, None)
+        with pytest.raises(SystemExit) as pytest_wrapped_e:
+            batch_job_handler.handler(event, None)
 
-        get_sns_client_mock.assert_called_once()
-        get_parameters_mock.assert_called_once()
-        setup_logging_mock.assert_called_once()
-
-        get_and_validate_job_details_mock.assert_called_once_with(event)
-
-        get_severity_mock_mock.assert_not_called()
-        get_notification_type_mock.assert_not_called()
-        generate_monitoring_message_payload_mock.assert_not_called()
-        send_sns_message_mock.assert_not_called()
+        assert pytest_wrapped_e.type == SystemExit
+        assert pytest_wrapped_e.value.code == 0
 
 
     @mock.patch("batch_job_handler_lambda.batch_job_handler.logger")
