@@ -129,7 +129,7 @@ class TestRetriever(unittest.TestCase):
             SUCCEEDED_JOB_STATUS,
             JOB_NAME,
         )
-    
+
     @mock.patch("batch_job_handler_lambda.batch_job_handler.send_sns_message")
     @mock.patch(
         "batch_job_handler_lambda.batch_job_handler.generate_monitoring_message_payload"
