@@ -3,7 +3,8 @@
 """batch_job_handler_lambda"""
 import pytest
 import argparse
-from batch_job_handler_lambda import batch_job_lambda
+import json
+from batch_job_handler_lambda import batch_job_handler
 
 import unittest
 from unittest import mock
@@ -32,21 +33,23 @@ PDM_JOB_QUEUE = "test_pdm_object_tagger"
 OTHER_JOB_QUEUE = "test_queue"
 JOB_NAME = "test job"
 
+SNS_TOPIC_ARN = "test-sns-topic-arn"
+
 args = argparse.Namespace()
 args.sns_topic = SNS_TOPIC_ARN
 args.log_level = "INFO"
 
 
 class TestRetriever(unittest.TestCase):
-    @mock.patch("status_checker_lambda.status_checker.send_sns_message")
-    @mock.patch("status_checker_lambda.status_checker.generate_monitoring_message_payload")
-    @mock.patch("status_checker_lambda.status_checker.get_notification_type")
-    @mock.patch("status_checker_lambda.status_checker.get_severity")
-    @mock.patch("status_checker_lambda.status_checker.get_and_validate_job_details")
-    @mock.patch("status_checker_lambda.status_checker.setup_logging")
-    @mock.patch("status_checker_lambda.status_checker.get_parameters")
-    @mock.patch("status_checker_lambda.status_checker.get_sns_client")
-    @mock.patch("status_checker_lambda.status_checker.logger")
+    @mock.patch("batch_job_handler_lambda.batch_job_handler.send_sns_message")
+    @mock.patch("batch_job_handler_lambda.batch_job_handler.generate_monitoring_message_payload")
+    @mock.patch("batch_job_handler_lambda.batch_job_handler.get_notification_type")
+    @mock.patch("batch_job_handler_lambda.batch_job_handler.get_severity")
+    @mock.patch("batch_job_handler_lambda.batch_job_handler.get_and_validate_job_details")
+    @mock.patch("batch_job_handler_lambda.batch_job_handler.setup_logging")
+    @mock.patch("batch_job_handler_lambda.batch_job_handler.get_parameters")
+    @mock.patch("batch_job_handler_lambda.batch_job_handler.get_sns_client")
+    @mock.patch("batch_job_handler_lambda.batch_job_handler.logger")
     def test_handler_gets_clients_and_processes_all_messages(
         self,
         mock_logger,
@@ -89,7 +92,7 @@ class TestRetriever(unittest.TestCase):
             "test_key": "test_value",
         }
 
-        status_checker.handler(event, None)
+        batch_job_handler.handler(event, None)
 
         get_sns_client_mock.assert_called_once()
         get_parameters_mock.assert_called_once()
@@ -124,15 +127,15 @@ class TestRetriever(unittest.TestCase):
 
 
     @pytest.mark.parametrize("status", [PENDING_JOB_STATUS, RUNNABLE_JOB_STATUS, STARTING_JOB_STATUS])
-    @mock.patch("status_checker_lambda.status_checker.send_sns_message")
-    @mock.patch("status_checker_lambda.status_checker.generate_monitoring_message_payload")
-    @mock.patch("status_checker_lambda.status_checker.get_notification_type")
-    @mock.patch("status_checker_lambda.status_checker.get_severity")
-    @mock.patch("status_checker_lambda.status_checker.get_and_validate_job_details")
-    @mock.patch("status_checker_lambda.status_checker.setup_logging")
-    @mock.patch("status_checker_lambda.status_checker.get_parameters")
-    @mock.patch("status_checker_lambda.status_checker.get_sns_client")
-    @mock.patch("status_checker_lambda.status_checker.logger")
+    @mock.patch("batch_job_handler_lambda.batch_job_handler.send_sns_message")
+    @mock.patch("batch_job_handler_lambda.batch_job_handler.generate_monitoring_message_payload")
+    @mock.patch("batch_job_handler_lambda.batch_job_handler.get_notification_type")
+    @mock.patch("batch_job_handler_lambda.batch_job_handler.get_severity")
+    @mock.patch("batch_job_handler_lambda.batch_job_handler.get_and_validate_job_details")
+    @mock.patch("batch_job_handler_lambda.batch_job_handler.setup_logging")
+    @mock.patch("batch_job_handler_lambda.batch_job_handler.get_parameters")
+    @mock.patch("batch_job_handler_lambda.batch_job_handler.get_sns_client")
+    @mock.patch("batch_job_handler_lambda.batch_job_handler.logger")
     def test_handler_ignored_jobs_with_ignored_status(
         self,
         mock_logger,
@@ -161,7 +164,7 @@ class TestRetriever(unittest.TestCase):
             "test_key": "test_value",
         }
 
-        status_checker.handler(event, None)
+        batch_job_handler.handler(event, None)
 
         get_sns_client_mock.assert_called_once()
         get_parameters_mock.assert_called_once()
@@ -175,7 +178,7 @@ class TestRetriever(unittest.TestCase):
         send_sns_message_mock.assert_not_called()
 
 
-    @mock.patch("batch_job_handler_lambda.batch_job_lambda.logger")
+    @mock.patch("batch_job_handler_lambda.batch_job_handler.logger")
     def test_sns_payload_generates_valid_payload(self, mock_logger):
         expected_payload = {
             "severity": CRITICAL_SEVERITY,
@@ -187,7 +190,7 @@ class TestRetriever(unittest.TestCase):
                 {"key": "Job queue", "value": PDM_JOB_QUEUE},
             ],
         }
-        actual_payload = batch_job_lambda.generate_monitoring_message_payload(
+        actual_payload = batch_job_handler.generate_monitoring_message_payload(
             PDM_JOB_QUEUE,
             JOB_NAME,
             FAILED_JOB_STATUS,
@@ -197,7 +200,7 @@ class TestRetriever(unittest.TestCase):
         self.assertEqual(expected_payload, actual_payload)
 
 
-    @mock.patch("batch_job_handler_lambda.batch_job_lambda.logger")
+    @mock.patch("batch_job_handler_lambda.batch_job_handler.logger")
     def test_send_sns_message_sends_right_message(
         self,
         mock_logger,
@@ -207,9 +210,10 @@ class TestRetriever(unittest.TestCase):
 
         payload = {"test_key": "test_value"}
 
-        batch_job_lambda.send_sns_message(
+        batch_job_handler.send_sns_message(
             sns_mock,
             payload,
+            SNS_TOPIC_ARN,
             PDM_JOB_QUEUE,
             JOB_NAME,
             FAILED_JOB_STATUS,
@@ -220,10 +224,10 @@ class TestRetriever(unittest.TestCase):
         )
 
 
-    @mock.patch("batch_job_handler_lambda.batch_job_lambda.logger")
+    @mock.patch("batch_job_handler_lambda.batch_job_handler.logger")
     def test_get_notification_type_returns_error_for_failed_pdm_job(self, mock_logger):
         expected = ERROR_NOTIFICATION_TYPE
-        actual = batch_job_lambda.get_notification_type(
+        actual = batch_job_handler.get_notification_type(
             PDM_JOB_QUEUE,
             FAILED_JOB_STATUS,
             JOB_NAME,
@@ -232,12 +236,12 @@ class TestRetriever(unittest.TestCase):
         self.assertEqual(expected, actual)
 
 
-    @mock.patch("batch_job_handler_lambda.batch_job_lambda.logger")
+    @mock.patch("batch_job_handler_lambda.batch_job_handler.logger")
     def test_get_notification_type_returns_error_for_failed_other_job(
         self, mock_logger
     ):
         expected = WARNING_NOTIFICATION_TYPE
-        actual = batch_job_lambda.get_notification_type(
+        actual = batch_job_handler.get_notification_type(
             OTHER_JOB_QUEUE,
             FAILED_JOB_STATUS,
             JOB_NAME,
@@ -246,12 +250,12 @@ class TestRetriever(unittest.TestCase):
         self.assertEqual(expected, actual)
 
 
-    @mock.patch("batch_job_handler_lambda.batch_job_lambda.logger")
+    @mock.patch("batch_job_handler_lambda.batch_job_handler.logger")
     def test_get_notification_type_returns_information_for_non_failed_pdm_job(
         self, mock_logger
     ):
         expected = INFORMATION_NOTIFICATION_TYPE
-        actual = batch_job_lambda.get_notification_type(
+        actual = batch_job_handler.get_notification_type(
             PDM_JOB_QUEUE,
             SUCCEEDED_JOB_STATUS,
             JOB_NAME,
@@ -260,12 +264,12 @@ class TestRetriever(unittest.TestCase):
         self.assertEqual(expected, actual)
 
 
-    @mock.patch("batch_job_handler_lambda.batch_job_lambda.logger")
+    @mock.patch("batch_job_handler_lambda.batch_job_handler.logger")
     def test_get_notification_type_returns_information_for_non_failed_other_job(
         self, mock_logger
     ):
         expected = INFORMATION_NOTIFICATION_TYPE
-        actual = batch_job_lambda.get_notification_type(
+        actual = batch_job_handler.get_notification_type(
             OTHER_JOB_QUEUE,
             SUCCEEDED_JOB_STATUS,
             JOB_NAME,
@@ -274,10 +278,10 @@ class TestRetriever(unittest.TestCase):
         self.assertEqual(expected, actual)
 
 
-    @mock.patch("batch_job_handler_lambda.batch_job_lambda.logger")
+    @mock.patch("batch_job_handler_lambda.batch_job_handler.logger")
     def test_get_severity_returns_critical_for_failed_pdm_job(self, mock_logger):
         expected = CRITICAL_SEVERITY
-        actual = batch_job_lambda.get_severity(
+        actual = batch_job_handler.get_severity(
             PDM_JOB_QUEUE,
             FAILED_JOB_STATUS,
             JOB_NAME,
@@ -285,10 +289,10 @@ class TestRetriever(unittest.TestCase):
 
         self.assertEqual(expected, actual)
 
-    @mock.patch("batch_job_handler_lambda.batch_job_lambda.logger")
+    @mock.patch("batch_job_handler_lambda.batch_job_handler.logger")
     def test_get_severity_returns_high_for_failed_other_job(self, mock_logger):
         expected = HIGH_SEVERITY
-        actual = batch_job_lambda.get_severity(
+        actual = batch_job_handler.get_severity(
             OTHER_JOB_QUEUE,
             FAILED_JOB_STATUS,
             JOB_NAME,
@@ -296,10 +300,10 @@ class TestRetriever(unittest.TestCase):
 
         self.assertEqual(expected, actual)
 
-    @mock.patch("batch_job_handler_lambda.batch_job_lambda.logger")
+    @mock.patch("batch_job_handler_lambda.batch_job_handler.logger")
     def test_get_severity_returns_high_for_succeeded_pdm_job(self, mock_logger):
         expected = HIGH_SEVERITY
-        actual = batch_job_lambda.get_severity(
+        actual = batch_job_handler.get_severity(
             PDM_JOB_QUEUE,
             SUCCEEDED_JOB_STATUS,
             JOB_NAME,
@@ -307,19 +311,19 @@ class TestRetriever(unittest.TestCase):
 
         self.assertEqual(expected, actual)
 
-    @mock.patch("batch_job_handler_lambda.batch_job_lambda.logger")
+    @mock.patch("batch_job_handler_lambda.batch_job_handler.logger")
     def test_get_severity_returns_high_for_succeeded_other_job(self, mock_logger):
         expected = HIGH_SEVERITY
-        actual = batch_job_lambda.get_severity(
+        actual = batch_job_handler.get_severity(
             OTHER_JOB_QUEUE,
             SUCCEEDED_JOB_STATUS,
             JOB_NAME,
         )
 
-    @mock.patch("batch_job_handler_lambda.batch_job_lambda.logger")
+    @mock.patch("batch_job_handler_lambda.batch_job_handler.logger")
     def test_get_severity_returns_high_for_other_status(self, mock_logger):
         expected = MEDIUM_SEVERITY
-        actual = batch_job_lambda.get_severity(
+        actual = batch_job_handler.get_severity(
             OTHER_JOB_QUEUE,
             RUNNABLE_JOB_STATUS,
             JOB_NAME,
@@ -327,7 +331,7 @@ class TestRetriever(unittest.TestCase):
 
         self.assertEqual(expected, actual)
 
-    @mock.patch("batch_job_handler_lambda.batch_job_lambda.logger")
+    @mock.patch("batch_job_handler_lambda.batch_job_handler.logger")
     def test_job_is_valid_with_valid_input(self, mock_logger):
         message = {
             "detail": {
@@ -336,19 +340,20 @@ class TestRetriever(unittest.TestCase):
                 JOB_QUEUE_KEY: PDM_JOB_QUEUE,
             }
         }
-        event = {"Records": [{"Sns": {"Message": message}}]}
+        event = {"Records": [{"Sns": {"Message": f"{json.dumps(message)}"}}]}
 
-        expected = message["detail"]
-        actual = batch_job_lambda.get_and_validate_job_details(
+        expected = {
+            JOB_NAME_KEY: JOB_NAME,
+            JOB_STATUS_KEY: SUCCEEDED_JOB_STATUS,
+            JOB_QUEUE_KEY: PDM_JOB_QUEUE,
+        }
+        actual = batch_job_handler.get_and_validate_job_details(
             event,
-            OTHER_JOB_QUEUE,
-            RUNNABLE_JOB_STATUS,
-            JOB_NAME,
         )
 
         self.assertEqual(expected, actual)
 
-    @mock.patch("batch_job_handler_lambda.batch_job_lambda.logger")
+    @mock.patch("batch_job_handler_lambda.batch_job_handler.logger")
     def test_job_is_invalid_with_no_detail_object(self, mock_logger):
         message = {
             "test": {
@@ -357,17 +362,14 @@ class TestRetriever(unittest.TestCase):
                 JOB_QUEUE_KEY: PDM_JOB_QUEUE,
             }
         }
-        event = {"Records": [{"Sns": {"Message": message}}]}
+        event = {"Records": [{"Sns": {"Message": f"{json.dumps(message)}"}}]}
 
         with pytest.raises(KeyError):
-            actual = batch_job_lambda.get_and_validate_job_details(
+            actual = batch_job_handler.get_and_validate_job_details(
                 event,
-                OTHER_JOB_QUEUE,
-                RUNNABLE_JOB_STATUS,
-                JOB_NAME,
             )
 
-    @mock.patch("batch_job_handler_lambda.batch_job_lambda.logger")
+    @mock.patch("batch_job_handler_lambda.batch_job_handler.logger")
     def test_job_is_invalid_with_no_job_name_field(self, mock_logger):
         message = {
             "detail": {
@@ -376,17 +378,14 @@ class TestRetriever(unittest.TestCase):
                 JOB_QUEUE_KEY: PDM_JOB_QUEUE,
             }
         }
-        event = {"Records": [{"Sns": {"Message": message}}]}
+        event = {"Records": [{"Sns": {"Message": f"{json.dumps(message)}"}}]}
 
         with pytest.raises(KeyError):
-            actual = batch_job_lambda.get_and_validate_job_details(
+            actual = batch_job_handler.get_and_validate_job_details(
                 event,
-                OTHER_JOB_QUEUE,
-                RUNNABLE_JOB_STATUS,
-                JOB_NAME,
             )
 
-    @mock.patch("batch_job_handler_lambda.batch_job_lambda.logger")
+    @mock.patch("batch_job_handler_lambda.batch_job_handler.logger")
     def test_job_is_invalid_with_no_job_status_field(self, mock_logger):
         message = {
             "detail": {
@@ -394,17 +393,14 @@ class TestRetriever(unittest.TestCase):
                 JOB_QUEUE_KEY: PDM_JOB_QUEUE,
             }
         }
-        event = {"Records": [{"Sns": {"Message": message}}]}
+        event = {"Records": [{"Sns": {"Message": f"{json.dumps(message)}"}}]}
 
         with pytest.raises(KeyError):
-            actual = batch_job_lambda.get_and_validate_job_details(
+            actual = batch_job_handler.get_and_validate_job_details(
                 event,
-                OTHER_JOB_QUEUE,
-                RUNNABLE_JOB_STATUS,
-                JOB_NAME,
             )
 
-    @mock.patch("batch_job_handler_lambda.batch_job_lambda.logger")
+    @mock.patch("batch_job_handler_lambda.batch_job_handler.logger")
     def test_job_is_invalid_with_no_job_queue_field(self, mock_logger):
         message = {
             "detail": {
@@ -412,14 +408,11 @@ class TestRetriever(unittest.TestCase):
                 JOB_STATUS_KEY: SUCCEEDED_JOB_STATUS,
             }
         }
-        event = {"Records": [{"Sns": {"Message": message}}]}
+        event = {"Records": [{"Sns": {"Message": f"{json.dumps(message)}"}}]}
 
         with pytest.raises(KeyError):
-            actual = batch_job_lambda.get_and_validate_job_details(
+            actual = batch_job_handler.get_and_validate_job_details(
                 event,
-                OTHER_JOB_QUEUE,
-                RUNNABLE_JOB_STATUS,
-                JOB_NAME,
             )
 
 

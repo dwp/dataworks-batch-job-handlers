@@ -252,8 +252,7 @@ def get_and_validate_job_details(event):
 
     dumped_message = get_escaped_json_string(message)
     logger.info(
-        f'Validating message", "message": {dumped_message}, '
-        + f'"job_queue": "{job_queue}, "job_name": "{job_name}, "job_status": "{job_status}'
+        f'Validating message", "message": {dumped_message}'
     )
 
     if "detail" not in message:
