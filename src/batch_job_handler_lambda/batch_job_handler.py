@@ -9,6 +9,7 @@ import os
 import sys
 import socket
 import re
+import datetime
 
 FAILED_JOB_STATUS = "FAILED"
 PENDING_JOB_STATUS = "PENDING"
@@ -19,8 +20,14 @@ SUCCEEDED_JOB_STATUS = "SUCCEEDED"
 IGNORED_JOB_STATUSES = [PENDING_JOB_STATUS, RUNNABLE_JOB_STATUS, STARTING_JOB_STATUS]
 
 JOB_NAME_KEY = "jobName"
-JOB_STATUS_KEY = "jobStatus"
+JOB_STATUS_KEY = "status"
 JOB_QUEUE_KEY = "jobQueue"
+JOB_STATUS_REASON_KEY = "statusReason"
+
+JOB_CREATED_AT_KEY = ("createdAt", "Created at")
+JOB_STARTED_AT_KEY = ("startedAt", "Started at")
+JOB_STOPPED_AT_KEY = ("stoppedAt", "Stopped at")
+OPTIONAL_TIME_KEYS = [JOB_CREATED_AT_KEY, JOB_STARTED_AT_KEY, JOB_STOPPED_AT_KEY]
 
 ERROR_NOTIFICATION_TYPE = "Error"
 WARNING_NOTIFICATION_TYPE = "Warning"
@@ -138,13 +145,14 @@ def handler(event, context):
     if not args.sns_topic:
         raise Exception("Required argument SNS_TOPIC is unset")
 
-    details_dict = get_and_validate_job_details(
+    detail_dict = get_and_validate_job_details(
         event,
+        args.sns_topic,
     )
 
-    job_name = details_dict[JOB_NAME_KEY]
-    job_status = details_dict[JOB_STATUS_KEY]
-    job_queue = details_dict[JOB_QUEUE_KEY]
+    job_name = detail_dict[JOB_NAME_KEY]
+    job_status = detail_dict[JOB_STATUS_KEY]
+    job_queue = detail_dict[JOB_QUEUE_KEY]
 
     if job_status in IGNORED_JOB_STATUSES:
         logger.info(
@@ -157,6 +165,7 @@ def handler(event, context):
     notification_type = get_notification_type(job_queue, job_status, job_name)
 
     payload = generate_monitoring_message_payload(
+        detail_dict,
         job_queue,
         job_status,
         job_name,
@@ -175,6 +184,7 @@ def handler(event, context):
 
 
 def generate_monitoring_message_payload(
+    detail_dict,
     job_queue,
     job_name,
     job_status,
@@ -184,7 +194,8 @@ def generate_monitoring_message_payload(
     """Generates a payload for a monitoring message.
 
     Arguments:
-        job_queue (dict): The job queue arn
+        detail_dict (dict): the dict of the details
+        job_queue (string): the job queue arn
         job_name (string): batch job name
         job_status (string): the status of the job
         export_date (string): the date of the export
@@ -192,15 +203,19 @@ def generate_monitoring_message_payload(
         notification_type (string): the notification type of the alert
 
     """
+    custom_elements = generate_custom_elements(
+        detail_dict,
+        job_queue,
+        job_name,
+        job_status,
+    )
+
     payload = {
         "severity": severity,
         "notification_type": notification_type,
         "slack_username": "AWS Batch Job Notification",
         "title_text": f"Job changed to - _{job_status}_",
-        "custom_elements": [
-            {"key": "Job name", "value": job_name},
-            {"key": "Job queue", "value": job_queue},
-        ],
+        "custom_elements": custom_elements,
     }
 
     dumped_payload = get_escaped_json_string(payload)
@@ -210,6 +225,44 @@ def generate_monitoring_message_payload(
     )
 
     return payload
+
+
+def generate_custom_elements(
+        detail_dict,
+        job_queue,
+        job_name,
+        job_status,
+    ):
+    """Generates a custom elements array.
+
+    Arguments:
+        detail_dict (dict): the dict of the details
+        job_queue (string): the job queue arn
+        job_name (string): batch job name
+        job_status (string): the status of the job
+
+    """
+    dumped_detail_dict = get_escaped_json_string(detail_dict)
+    logger.info(
+        f'Generating custom elements", "detail_dict": {dumped_detail_dict}, '
+        + f'"job_queue": "{job_queue}, "job_name": "{job_name}, "job_status": "{job_status}'
+    )
+
+    custom_elements = [
+        {"key": "Job name", "value": job_name},
+        {"key": "Job queue", "value": job_queue},
+    ]
+
+    if JOB_STATUS_REASON_KEY in detail_dict:
+        custom_elements.append({"key": "Job status reason", "value": detail_dict[JOB_STATUS_REASON_KEY]})
+
+    for (time_key, time_name) in OPTIONAL_TIME_KEYS:
+        if time_key in detail_dict and detail_dict[time_key]:
+            timestamp = datetime.datetime.fromtimestamp(detail_dict[time_key] / 1000)
+            timestamp_string = timestamp.strftime('%Y-%m-%dT%H:%M:%S')
+            custom_elements.append({"key": time_name, "value": timestamp_string})
+
+    return custom_elements
 
 
 def send_sns_message(
@@ -244,33 +297,35 @@ def send_sns_message(
     return sns_client.publish(TopicArn=sns_topic_arn, Message=json_message)
 
 
-def get_and_validate_job_details(event):
+def get_and_validate_job_details(event, sns_topic_arn):
     """Get the job name from the SNS event.
 
     Arguments:
         event (dict): The SNS event
+        sns_topic_arn (string): SNS topic arn for logging
     """
     message = json.loads(event["Records"][0]["Sns"]["Message"])
 
     dumped_message = get_escaped_json_string(message)
-    logger.info(f'Validating message", "message": {dumped_message}')
+    logger.info(f'Validating message", "message": {dumped_message}, "sns_topic_arn": "{sns_topic_arn}')
 
     if "detail" not in message:
         raise KeyError("Message contains no 'detail' key")
 
-    details_dict = message["detail"]
+    detail_dict = message["detail"]
     required_keys = [JOB_NAME_KEY, JOB_STATUS_KEY, JOB_QUEUE_KEY]
 
     for required_key in required_keys:
-        if required_key not in details_dict:
-            raise KeyError(f"Details dict contains no '{required_key}' key")
+        if required_key not in detail_dict:
+            error_string = f"Details dict contains no '{required_key}' key"
+            raise KeyError(error_string)
 
     logger.info(
-        f'Message has been validated", "message": {dumped_message}, "job_queue": "{details_dict[JOB_QUEUE_KEY]}, '
-        + f'"job_name": "{details_dict[JOB_NAME_KEY]}, "job_status": "{details_dict[JOB_STATUS_KEY]}'
+        f'Message has been validated", "message": {dumped_message}, "job_queue": "{detail_dict[JOB_QUEUE_KEY]}, '
+        + f'"job_name": "{detail_dict[JOB_NAME_KEY]}, "job_status": "{detail_dict[JOB_STATUS_KEY]}'
     )
 
-    return details_dict
+    return detail_dict
 
 
 def get_severity(job_queue, job_status, job_name):

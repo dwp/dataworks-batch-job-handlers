@@ -18,8 +18,13 @@ STARTING_JOB_STATUS = "STARTING"
 SUCCEEDED_JOB_STATUS = "SUCCEEDED"
 
 JOB_NAME_KEY = "jobName"
-JOB_STATUS_KEY = "jobStatus"
+JOB_STATUS_KEY = "status"
 JOB_QUEUE_KEY = "jobQueue"
+STATUS_REASON_KEY = "statusReason"
+
+JOB_CREATED_AT_KEY = ("createdAt", "Created at")
+JOB_STARTED_AT_KEY = ("startedAt", "Started at")
+JOB_STOPPED_AT_KEY = ("stoppedAt", "Stopped at")
 
 ERROR_NOTIFICATION_TYPE = "Error"
 WARNING_NOTIFICATION_TYPE = "Warning"
@@ -103,7 +108,10 @@ class TestRetriever(unittest.TestCase):
         get_parameters_mock.assert_called_once()
         setup_logging_mock.assert_called_once()
 
-        get_and_validate_job_details_mock.assert_called_once_with(event)
+        get_and_validate_job_details_mock.assert_called_once_with(
+            event,
+            SNS_TOPIC_ARN,
+        )
         get_severity_mock.assert_called_once_with(
             PDM_JOB_QUEUE,
             SUCCEEDED_JOB_STATUS,
@@ -115,6 +123,7 @@ class TestRetriever(unittest.TestCase):
             JOB_NAME,
         )
         generate_monitoring_message_payload_mock.assert_called_once_with(
+            details_dict,
             PDM_JOB_QUEUE,
             SUCCEEDED_JOB_STATUS,
             JOB_NAME,
@@ -177,25 +186,43 @@ class TestRetriever(unittest.TestCase):
         assert pytest_wrapped_e.type == SystemExit
         assert pytest_wrapped_e.value.code == 0
 
+    @mock.patch("batch_job_handler_lambda.batch_job_handler.generate_custom_elements")
     @mock.patch("batch_job_handler_lambda.batch_job_handler.logger")
-    def test_sns_payload_generates_valid_payload(self, mock_logger):
+    def test_sns_payload_generates_valid_payload(
+            self, 
+            mock_logger,
+            generate_custom_elements_mock,
+        ):
+        custom_elements = [
+            {"key": "Job name", "value": JOB_NAME},
+            {"key": "Job queue", "value": PDM_JOB_QUEUE},
+        ]
+        generate_custom_elements_mock.return_value = custom_elements
+
         expected_payload = {
             "severity": CRITICAL_SEVERITY,
             "notification_type": INFORMATION_NOTIFICATION_TYPE,
             "slack_username": "AWS Batch Job Notification",
             "title_text": "Job changed to - _FAILED_",
-            "custom_elements": [
-                {"key": "Job name", "value": JOB_NAME},
-                {"key": "Job queue", "value": PDM_JOB_QUEUE},
-            ],
+            "custom_elements": custom_elements,
         }
+
         actual_payload = batch_job_handler.generate_monitoring_message_payload(
+            {},
             PDM_JOB_QUEUE,
             JOB_NAME,
             FAILED_JOB_STATUS,
             CRITICAL_SEVERITY,
             INFORMATION_NOTIFICATION_TYPE,
         )
+
+        generate_custom_elements_mock.assert_called_once_with(
+            {},
+            PDM_JOB_QUEUE,
+            JOB_NAME,
+            FAILED_JOB_STATUS,
+        )
+
         self.assertEqual(expected_payload, actual_payload)
 
     @mock.patch("batch_job_handler_lambda.batch_job_handler.logger")
@@ -342,6 +369,7 @@ class TestRetriever(unittest.TestCase):
         }
         actual = batch_job_handler.get_and_validate_job_details(
             event,
+            SNS_TOPIC_ARN,
         )
 
         self.assertEqual(expected, actual)
@@ -360,6 +388,7 @@ class TestRetriever(unittest.TestCase):
         with pytest.raises(KeyError):
             actual = batch_job_handler.get_and_validate_job_details(
                 event,
+                SNS_TOPIC_ARN,
             )
 
     @mock.patch("batch_job_handler_lambda.batch_job_handler.logger")
@@ -375,6 +404,7 @@ class TestRetriever(unittest.TestCase):
         with pytest.raises(KeyError):
             actual = batch_job_handler.get_and_validate_job_details(
                 event,
+                SNS_TOPIC_ARN,
             )
 
     @mock.patch("batch_job_handler_lambda.batch_job_handler.logger")
@@ -390,6 +420,7 @@ class TestRetriever(unittest.TestCase):
         with pytest.raises(KeyError):
             actual = batch_job_handler.get_and_validate_job_details(
                 event,
+                SNS_TOPIC_ARN,
             )
 
     @mock.patch("batch_job_handler_lambda.batch_job_handler.logger")
@@ -405,7 +436,30 @@ class TestRetriever(unittest.TestCase):
         with pytest.raises(KeyError):
             actual = batch_job_handler.get_and_validate_job_details(
                 event,
+                SNS_TOPIC_ARN,
             )
+
+    @mock.patch("batch_job_handler_lambda.batch_job_handler.logger")
+    def test_generate_custom_elements_generates_valid_payload(self, mock_logger):
+        details_dict = {
+            JOB_CREATED_AT_KEY[0]: 1613642621525,
+            JOB_STARTED_AT_KEY[0]: 1613642730217,
+            JOB_STOPPED_AT_KEY[0]: 1613642732819,
+        }
+        expected_payload = [
+            {"key": "Job name", "value": JOB_NAME},
+            {"key": "Job queue", "value": PDM_JOB_QUEUE},   
+            {"key": JOB_CREATED_AT_KEY[1], "value": "2021-02-18T10:03:41"},
+            {"key": JOB_STARTED_AT_KEY[1], "value": "2021-02-18T10:05:30"},
+            {"key": JOB_STOPPED_AT_KEY[1], "value": "2021-02-18T10:05:32"},
+        ]
+        actual_payload = batch_job_handler.generate_custom_elements(
+            details_dict,
+            PDM_JOB_QUEUE,
+            JOB_NAME,
+            FAILED_JOB_STATUS,
+        )
+        self.assertEqual(expected_payload, actual_payload)
 
 
 if __name__ == "__main__":
