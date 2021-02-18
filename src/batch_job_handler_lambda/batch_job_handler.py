@@ -167,8 +167,8 @@ def handler(event, context):
     payload = generate_monitoring_message_payload(
         detail_dict,
         job_queue,
-        job_status,
         job_name,
+        job_status,
         severity,
         notification_type,
     )
@@ -210,11 +210,13 @@ def generate_monitoring_message_payload(
         job_status,
     )
 
+    title_text = f"Job changed to - {job_status}"
+
     payload = {
         "severity": severity,
         "notification_type": notification_type,
         "slack_username": "AWS Batch Job Notification",
-        "title_text": f"Job changed to - _{job_status}_",
+        "title_text": title_text,
         "custom_elements": custom_elements,
     }
 

@@ -125,8 +125,8 @@ class TestRetriever(unittest.TestCase):
         generate_monitoring_message_payload_mock.assert_called_once_with(
             details_dict,
             PDM_JOB_QUEUE,
-            SUCCEEDED_JOB_STATUS,
             JOB_NAME,
+            SUCCEEDED_JOB_STATUS,
             CRITICAL_SEVERITY,
             INFORMATION_NOTIFICATION_TYPE,
         )
