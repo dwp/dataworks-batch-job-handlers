@@ -203,7 +203,7 @@ class TestRetriever(unittest.TestCase):
             "severity": CRITICAL_SEVERITY,
             "notification_type": INFORMATION_NOTIFICATION_TYPE,
             "slack_username": "AWS Batch Job Notification",
-            "title_text": "Job changed to - _FAILED_",
+            "title_text": "Job changed to - FAILED",
             "custom_elements": custom_elements,
         }
 
