@@ -189,10 +189,10 @@ class TestRetriever(unittest.TestCase):
     @mock.patch("batch_job_handler_lambda.batch_job_handler.generate_custom_elements")
     @mock.patch("batch_job_handler_lambda.batch_job_handler.logger")
     def test_sns_payload_generates_valid_payload(
-            self, 
-            mock_logger,
-            generate_custom_elements_mock,
-        ):
+        self,
+        mock_logger,
+        generate_custom_elements_mock,
+    ):
         custom_elements = [
             {"key": "Job name", "value": JOB_NAME},
             {"key": "Job queue", "value": PDM_JOB_QUEUE},
@@ -448,7 +448,7 @@ class TestRetriever(unittest.TestCase):
         }
         expected_payload = [
             {"key": "Job name", "value": JOB_NAME},
-            {"key": "Job queue", "value": PDM_JOB_QUEUE},   
+            {"key": "Job queue", "value": PDM_JOB_QUEUE},
             {"key": JOB_CREATED_AT_KEY[1], "value": "2021-02-18T10:03:41"},
             {"key": JOB_STARTED_AT_KEY[1], "value": "2021-02-18T10:05:30"},
             {"key": JOB_STOPPED_AT_KEY[1], "value": "2021-02-18T10:05:32"},

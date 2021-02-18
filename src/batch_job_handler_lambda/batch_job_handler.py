@@ -228,11 +228,11 @@ def generate_monitoring_message_payload(
 
 
 def generate_custom_elements(
-        detail_dict,
-        job_queue,
-        job_name,
-        job_status,
-    ):
+    detail_dict,
+    job_queue,
+    job_name,
+    job_status,
+):
     """Generates a custom elements array.
 
     Arguments:
@@ -254,12 +254,14 @@ def generate_custom_elements(
     ]
 
     if JOB_STATUS_REASON_KEY in detail_dict:
-        custom_elements.append({"key": "Job status reason", "value": detail_dict[JOB_STATUS_REASON_KEY]})
+        custom_elements.append(
+            {"key": "Job status reason", "value": detail_dict[JOB_STATUS_REASON_KEY]}
+        )
 
     for (time_key, time_name) in OPTIONAL_TIME_KEYS:
         if time_key in detail_dict and detail_dict[time_key]:
             timestamp = datetime.datetime.fromtimestamp(detail_dict[time_key] / 1000)
-            timestamp_string = timestamp.strftime('%Y-%m-%dT%H:%M:%S')
+            timestamp_string = timestamp.strftime("%Y-%m-%dT%H:%M:%S")
             custom_elements.append({"key": time_name, "value": timestamp_string})
 
     return custom_elements
@@ -307,7 +309,9 @@ def get_and_validate_job_details(event, sns_topic_arn):
     message = json.loads(event["Records"][0]["Sns"]["Message"])
 
     dumped_message = get_escaped_json_string(message)
-    logger.info(f'Validating message", "message": {dumped_message}, "sns_topic_arn": "{sns_topic_arn}')
+    logger.info(
+        f'Validating message", "message": {dumped_message}, "sns_topic_arn": "{sns_topic_arn}'
+    )
 
     if "detail" not in message:
         raise KeyError("Message contains no 'detail' key")
