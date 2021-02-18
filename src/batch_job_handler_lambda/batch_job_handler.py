@@ -35,8 +35,6 @@ REGEX_UCFS_CLAIMANT_JOB_QUEUE_ARN = re.compile("^.*/ucfs_claimant_api$")
 TRIMMER_JOB_NAME = re.compile("^.*/k2hb_reconciliation_trimmer$")
 REGEX_TRIMMER_JOB_QUEUE_ARN = re.compile("^.*/k2hb_reconciliation_trimmer$")
 
-log_level = os.environ["LOG_LEVEL"].upper() if "LOG_LEVEL" in os.environ else "INFO"
-
 args = None
 logger = None
 
@@ -88,6 +86,7 @@ def get_parameters():
     parser.add_argument("--sns-topic", help="SNS topic ARN")
     parser.add_argument("--environment", help="Environment value", default="NOT_SET")
     parser.add_argument("--application", help="Application", default="NOT_SET")
+    parser.add_argument("--log-level", help="Log level for lambda", default="INFO")
 
     _args = parser.parse_args()
 
@@ -106,6 +105,9 @@ def get_parameters():
 
     if "APPLICATION" in os.environ:
         _args.application = os.environ["APPLICATION"]
+
+    if "LOG_LEVEL" in os.environ:
+        _args.log_level = os.environ["LOG_LEVEL"]
 
     return _args
 
