@@ -157,7 +157,7 @@ def handler(event, context):
     if job_status in IGNORED_JOB_STATUSES:
         logger.info(
             f'Exiting normally as job status warrants no notification", '
-            + f'"job_name": "{job_name}, "job_queue": "{job_queue}, "job_status": "{job_status}'
+            + f'"job_name": "{job_name}", "job_queue": "{job_queue}", "job_status": "{job_status}'
         )
         sys.exit(0)
 
@@ -167,8 +167,8 @@ def handler(event, context):
     payload = generate_monitoring_message_payload(
         detail_dict,
         job_queue,
-        job_status,
         job_name,
+        job_status,
         severity,
         notification_type,
     )
@@ -210,18 +210,20 @@ def generate_monitoring_message_payload(
         job_status,
     )
 
+    title_text = f"Job changed to - {job_status}"
+
     payload = {
         "severity": severity,
         "notification_type": notification_type,
         "slack_username": "AWS Batch Job Notification",
-        "title_text": f"Job changed to - _{job_status}_",
+        "title_text": title_text,
         "custom_elements": custom_elements,
     }
 
     dumped_payload = get_escaped_json_string(payload)
     logger.info(
         f'Generated monitoring SNS payload", "payload": {dumped_payload}, '
-        + f'"job_queue": "{job_queue}, "job_name": "{job_name}, "job_status": "{job_status}'
+        + f'"job_queue": "{job_queue}", "job_name": "{job_name}", "job_status": "{job_status}'
     )
 
     return payload
@@ -245,7 +247,7 @@ def generate_custom_elements(
     dumped_detail_dict = get_escaped_json_string(detail_dict)
     logger.info(
         f'Generating custom elements", "detail_dict": {dumped_detail_dict}, '
-        + f'"job_queue": "{job_queue}, "job_name": "{job_name}, "job_status": "{job_status}'
+        + f'"job_queue": "{job_queue}", "job_name": "{job_name}", "job_status": "{job_status}'
     )
 
     custom_elements = [
@@ -293,7 +295,7 @@ def send_sns_message(
     dumped_payload = get_escaped_json_string(payload)
     logger.info(
         f'Publishing payload to SNS", "payload": {dumped_payload}, "sns_topic_arn": "{sns_topic_arn}", '
-        + f'"job_queue": "{job_queue}, "job_name": "{job_name}, "job_status": "{job_status}'
+        + f'"job_queue": "{job_queue}", "job_name": "{job_name}", "job_status": "{job_status}'
     )
 
     return sns_client.publish(TopicArn=sns_topic_arn, Message=json_message)
@@ -310,7 +312,7 @@ def get_and_validate_job_details(event, sns_topic_arn):
 
     dumped_message = get_escaped_json_string(message)
     logger.info(
-        f'Validating message", "message": {dumped_message}, "sns_topic_arn": "{sns_topic_arn}'
+        f'Validating message", "message_details": {dumped_message}, "sns_topic_arn": "{sns_topic_arn}'
     )
 
     if "detail" not in message:
@@ -325,8 +327,8 @@ def get_and_validate_job_details(event, sns_topic_arn):
             raise KeyError(error_string)
 
     logger.info(
-        f'Message has been validated", "message": {dumped_message}, "job_queue": "{detail_dict[JOB_QUEUE_KEY]}, '
-        + f'"job_name": "{detail_dict[JOB_NAME_KEY]}, "job_status": "{detail_dict[JOB_STATUS_KEY]}'
+        f'Message has been validated", "message_details": {dumped_message}, "job_queue": "{detail_dict[JOB_QUEUE_KEY]}", '
+        + f'"job_name": "{detail_dict[JOB_NAME_KEY]}", "job_status": "{detail_dict[JOB_STATUS_KEY]}'
     )
 
     return detail_dict
@@ -353,7 +355,7 @@ def get_severity(job_queue, job_status, job_name):
 
     logger.info(
         f'Generated severity", "severity": "{severity}", "job_name": "{job_name}, '
-        + f'"job_queue": "{job_queue}, "job_name": "{job_name}, "job_status": "{job_status}'
+        + f'"job_queue": "{job_queue}", "job_name": "{job_name}", "job_status": "{job_status}'
     )
 
     return severity
@@ -378,7 +380,7 @@ def get_notification_type(job_queue, job_status, job_name):
 
     logger.info(
         f'Generated notification type", "notification_type": "{notification_type}", '
-        + f'"job_queue": "{job_queue}, "job_name": "{job_name}, "job_status": "{job_status}'
+        + f'"job_queue": "{job_queue}", "job_name": "{job_name}", "job_status": "{job_status}'
     )
 
     return notification_type
