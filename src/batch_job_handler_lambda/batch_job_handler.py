@@ -264,13 +264,11 @@ def get_friendly_name(
     elif REGEX_COALESCER_JOB_QUEUE_ARN.match(job_queue):
         friendly_name = "Batch coalescer"
 
-
     logger.info(
         f'Generated job queue friendly name", "friendly_name": "{friendly_name}", '
         + f'"job_queue": "{job_queue}", "job_name": "{job_name}", "job_status": "{job_status}'
     )
     return friendly_name
-
 
 
 def generate_custom_elements(
