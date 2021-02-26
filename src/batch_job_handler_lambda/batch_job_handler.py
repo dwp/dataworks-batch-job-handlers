@@ -39,8 +39,8 @@ MEDIUM_SEVERITY = "Medium"
 
 REGEX_PDM_OBJECT_TAGGING_JOB_QUEUE_ARN = re.compile("^.*/pdm_object_tagger$")
 REGEX_UCFS_CLAIMANT_JOB_QUEUE_ARN = re.compile("^.*/ucfs_claimant_api$")
-TRIMMER_JOB_NAME = re.compile("^.*/k2hb_reconciliation_trimmer$")
 REGEX_TRIMMER_JOB_QUEUE_ARN = re.compile("^.*/k2hb_reconciliation_trimmer$")
+REGEX_COALESCER_JOB_QUEUE_ARN = re.compile("^.*/batch_corporate_storage_coalescer$")
 
 args = None
 logger = None
@@ -210,7 +210,13 @@ def generate_monitoring_message_payload(
         job_status,
     )
 
-    title_text = f"Job changed to - {job_status}"
+    friendly_name = get_friendly_name(
+        job_queue,
+        job_name,
+        job_status,
+    )
+
+    title_text = f"{friendly_name} changed to {job_status}"
 
     payload = {
         "severity": severity,
@@ -227,6 +233,42 @@ def generate_monitoring_message_payload(
     )
 
     return payload
+
+
+def get_friendly_name(
+    job_queue,
+    job_name,
+    job_status,
+):
+    """Returns a friendly name for the given job queue.
+
+    Arguments:
+        job_queue (string): the job queue arn
+        job_name (string): batch job name
+        job_status (string): the status of the job
+
+    """
+    logger.info(
+        f'Generating job queue friendly name", '
+        + f'"job_queue": "{job_queue}", "job_name": "{job_name}", "job_status": "{job_status}'
+    )
+
+    friendly_name = "Batch job"
+
+    if REGEX_PDM_OBJECT_TAGGING_JOB_QUEUE_ARN.match(job_queue):
+        friendly_name = "PDM object tagger"
+    elif REGEX_UCFS_CLAIMANT_JOB_QUEUE_ARN.match(job_queue):
+        friendly_name = "UCFS claimant data load"
+    elif REGEX_TRIMMER_JOB_QUEUE_ARN.match(job_queue):
+        friendly_name = "K2HB trimmer"
+    elif REGEX_COALESCER_JOB_QUEUE_ARN.match(job_queue):
+        friendly_name = "Batch coalescer"
+
+    logger.info(
+        f'Generated job queue friendly name", "friendly_name": "{friendly_name}", '
+        + f'"job_queue": "{job_queue}", "job_name": "{job_name}", "job_status": "{job_status}'
+    )
+    return friendly_name
 
 
 def generate_custom_elements(
