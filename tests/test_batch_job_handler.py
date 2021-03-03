@@ -450,7 +450,9 @@ class TestRetriever(unittest.TestCase):
             )
 
     @mock.patch("batch_job_handler_lambda.batch_job_handler.logger")
-    def test_generate_custom_elements_generates_valid_payload_with_a_slash_in_queue_name(self, mock_logger):
+    def test_generate_custom_elements_generates_valid_payload_with_a_slash_in_queue_name(
+        self, mock_logger
+    ):
         details_dict = {
             JOB_CREATED_AT_KEY[0]: 1613642621525,
             JOB_STARTED_AT_KEY[0]: 1613642730217,
@@ -472,7 +474,9 @@ class TestRetriever(unittest.TestCase):
         self.assertEqual(expected_payload, actual_payload)
 
     @mock.patch("batch_job_handler_lambda.batch_job_handler.logger")
-    def test_generate_custom_elements_generates_valid_payload_with_no_slash_in_queue_name(self, mock_logger):
+    def test_generate_custom_elements_generates_valid_payload_with_no_slash_in_queue_name(
+        self, mock_logger
+    ):
         details_dict = {
             JOB_CREATED_AT_KEY[0]: 1613642621525,
             JOB_STARTED_AT_KEY[0]: 1613642730217,
@@ -494,7 +498,9 @@ class TestRetriever(unittest.TestCase):
         self.assertEqual(expected_payload, actual_payload)
 
     @mock.patch("batch_job_handler_lambda.batch_job_handler.logger")
-    def test_generate_custom_elements_generates_valid_payload_with_two_slashes_in_queue_name(self, mock_logger):
+    def test_generate_custom_elements_generates_valid_payload_with_two_slashes_in_queue_name(
+        self, mock_logger
+    ):
         details_dict = {
             JOB_CREATED_AT_KEY[0]: 1613642621525,
             JOB_STARTED_AT_KEY[0]: 1613642730217,
