@@ -494,6 +494,28 @@ class TestRetriever(unittest.TestCase):
         self.assertEqual(expected_payload, actual_payload)
 
     @mock.patch("batch_job_handler_lambda.batch_job_handler.logger")
+    def test_generate_custom_elements_generates_valid_payload_with_two_slashes_in_queue_name(self, mock_logger):
+        details_dict = {
+            JOB_CREATED_AT_KEY[0]: 1613642621525,
+            JOB_STARTED_AT_KEY[0]: 1613642730217,
+            JOB_STOPPED_AT_KEY[0]: 1613642732819,
+        }
+        expected_payload = [
+            {"key": "Job name", "value": JOB_NAME},
+            {"key": "Job queue", "value": "temp_test"},
+            {"key": JOB_CREATED_AT_KEY[1], "value": "2021-02-18T10:03:41"},
+            {"key": JOB_STARTED_AT_KEY[1], "value": "2021-02-18T10:05:30"},
+            {"key": JOB_STOPPED_AT_KEY[1], "value": "2021-02-18T10:05:32"},
+        ]
+        actual_payload = batch_job_handler.generate_custom_elements(
+            details_dict,
+            f"{PDM_JOB_QUEUE}/temp_test",
+            JOB_NAME,
+            FAILED_JOB_STATUS,
+        )
+        self.assertEqual(expected_payload, actual_payload)
+
+    @mock.patch("batch_job_handler_lambda.batch_job_handler.logger")
     def test_get_friendly_name_returns_a_matched_name(self, mock_logger):
         expected = "PDM object tagger"
         actual = batch_job_handler.get_friendly_name(
