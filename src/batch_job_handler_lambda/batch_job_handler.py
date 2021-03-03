@@ -292,9 +292,11 @@ def generate_custom_elements(
         + f'"job_queue": "{job_queue}", "job_name": "{job_name}", "job_status": "{job_status}'
     )
 
+    job_queue_end = job_queue.split("/")[-1]
+
     custom_elements = [
         {"key": "Job name", "value": job_name},
-        {"key": "Job queue", "value": job_queue},
+        {"key": "Job queue", "value": job_queue_end},
     ]
 
     if JOB_STATUS_REASON_KEY in detail_dict:
