@@ -11,6 +11,8 @@ import socket
 import re
 import datetime
 
+UNSET_TEXT = "NOT_SET"
+
 FAILED_JOB_STATUS = "FAILED"
 PENDING_JOB_STATUS = "PENDING"
 RUNNABLE_JOB_STATUS = "RUNNABLE"
@@ -91,8 +93,9 @@ def get_parameters():
     parser.add_argument("--aws-profile", default="default")
     parser.add_argument("--aws-region", default="eu-west-2")
     parser.add_argument("--sns-topic", help="SNS topic ARN")
-    parser.add_argument("--environment", help="Environment value", default="NOT_SET")
-    parser.add_argument("--application", help="Application", default="NOT_SET")
+    parser.add_argument("--environment", help="Environment value", default=UNSET_TEXT)
+    parser.add_argument("--application", help="Application", default=UNSET_TEXT)
+    parser.add_argument("--slack-channel-override", help="Slack channel to use for overriden jobs", default=UNSET_TEXT)
     parser.add_argument("--log-level", help="Log level for lambda", default="INFO")
 
     _args = parser.parse_args()
@@ -112,6 +115,9 @@ def get_parameters():
 
     if "APPLICATION" in os.environ:
         _args.application = os.environ["APPLICATION"]
+
+    if "SLACK_CHANNEL_OVERRIDE" in os.environ:
+        _args.slack_channel_override = os.environ["SLACK_CHANNEL_OVERRIDE"]
 
     if "LOG_LEVEL" in os.environ:
         _args.log_level = os.environ["LOG_LEVEL"]
@@ -164,8 +170,16 @@ def handler(event, context):
     severity = get_severity(job_queue, job_status, job_name)
     notification_type = get_notification_type(job_queue, job_status, job_name)
 
+    slack_channel_override = get_slack_channel_override(
+        args.slack_channel_override,
+        job_queue,
+        job_name,
+        job_status,
+    )
+
     payload = generate_monitoring_message_payload(
         detail_dict,
+        slack_channel_override,
         job_queue,
         job_name,
         job_status,
@@ -185,6 +199,7 @@ def handler(event, context):
 
 def generate_monitoring_message_payload(
     detail_dict,
+    slack_channel_override,
     job_queue,
     job_name,
     job_status,
@@ -195,6 +210,7 @@ def generate_monitoring_message_payload(
 
     Arguments:
         detail_dict (dict): the dict of the details
+        slack_channel_override (string): slack channel to override (or None)
         job_queue (string): the job queue arn
         job_name (string): batch job name
         job_status (string): the status of the job
@@ -225,6 +241,9 @@ def generate_monitoring_message_payload(
         "title_text": title_text,
         "custom_elements": custom_elements,
     }
+
+    if slack_channel_override is not None:
+        payload["slack_channel_override"] = slack_channel_override
 
     dumped_payload = get_escaped_json_string(payload)
     logger.info(
@@ -269,6 +288,48 @@ def get_friendly_name(
         + f'"job_queue": "{job_queue}", "job_name": "{job_name}", "job_status": "{job_status}'
     )
     return friendly_name
+
+
+def get_slack_channel_override(
+    slack_channel_override,
+    job_queue,
+    job_name,
+    job_status,
+):
+    """Returns the slack channel to use as an override or None if not set.
+
+    Arguments:
+        slack_channel_override (string): the override from args
+        job_queue (string): the job queue arn
+        job_name (string): batch job name
+        job_status (string): the status of the job
+
+    """
+    logger.info(
+        f'Getting slack channel override", "slack_channel_override_arg": "{slack_channel_override}", '
+        + f'"job_queue": "{job_queue}", "job_name": "{job_name}", "job_status": "{job_status}'
+    )
+
+    if slack_channel_override == UNSET_TEXT:
+        logger.info(
+            f'Not using override as slack channel override not passed in", "slack_channel_override_arg": "{slack_channel_override}", '
+            + f'"job_queue": "{job_queue}", "job_name": "{job_name}", "job_status": "{job_status}'
+        )
+        return None
+
+    if REGEX_COALESCER_JOB_QUEUE_ARN.match(job_queue):
+        logger.info(
+            f'Using slack channel override for coalescer job", "slack_channel_override": "{slack_channel_override}", '
+            + f'"job_queue": "{job_queue}", "job_name": "{job_name}", "job_status": "{job_status}'
+        )
+        return slack_channel_override
+
+    logger.info(
+        f'Not using slack channel override for queue", '
+        + f'"job_queue": "{job_queue}", "job_name": "{job_name}", "job_status": "{job_status}'
+    )
+
+    return None
 
 
 def generate_custom_elements(

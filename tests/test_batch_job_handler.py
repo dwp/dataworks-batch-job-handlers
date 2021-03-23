@@ -34,14 +34,17 @@ CRITICAL_SEVERITY = "Critical"
 HIGH_SEVERITY = "High"
 MEDIUM_SEVERITY = "Medium"
 
+COALECSER_JOB_QUEUE = "test/batch_corporate_storage_coalescer"
 PDM_JOB_QUEUE = "test/pdm_object_tagger"
 OTHER_JOB_QUEUE = "test_queue"
 JOB_NAME = "test job"
 
 SNS_TOPIC_ARN = "test-sns-topic-arn"
+MOCK_CHANNEL = "test_slack_channel"
 
 args = argparse.Namespace()
 args.sns_topic = SNS_TOPIC_ARN
+args.slack_channel_override = MOCK_CHANNEL
 args.log_level = "INFO"
 
 
@@ -49,6 +52,9 @@ class TestRetriever(unittest.TestCase):
     @mock.patch("batch_job_handler_lambda.batch_job_handler.send_sns_message")
     @mock.patch(
         "batch_job_handler_lambda.batch_job_handler.generate_monitoring_message_payload"
+    )
+    @mock.patch(
+        "batch_job_handler_lambda.batch_job_handler.get_slack_channel_override"
     )
     @mock.patch("batch_job_handler_lambda.batch_job_handler.get_notification_type")
     @mock.patch("batch_job_handler_lambda.batch_job_handler.get_severity")
@@ -68,6 +74,7 @@ class TestRetriever(unittest.TestCase):
         get_and_validate_job_details_mock,
         get_severity_mock,
         get_notification_type_mock,
+        get_slack_channel_override_mock,
         generate_monitoring_message_payload_mock,
         send_sns_message_mock,
     ):
@@ -84,6 +91,7 @@ class TestRetriever(unittest.TestCase):
         get_and_validate_job_details_mock.return_value = details_dict
         get_severity_mock.return_value = CRITICAL_SEVERITY
         get_notification_type_mock.return_value = INFORMATION_NOTIFICATION_TYPE
+        get_slack_channel_override_mock.return_value = MOCK_CHANNEL
 
         payload = {
             "severity": HIGH_SEVERITY,
@@ -122,8 +130,15 @@ class TestRetriever(unittest.TestCase):
             SUCCEEDED_JOB_STATUS,
             JOB_NAME,
         )
+        get_slack_channel_override_mock.assert_called_once_with(
+            MOCK_CHANNEL,
+            PDM_JOB_QUEUE,
+            JOB_NAME,
+            SUCCEEDED_JOB_STATUS,
+        )
         generate_monitoring_message_payload_mock.assert_called_once_with(
             details_dict,
+            MOCK_CHANNEL,
             PDM_JOB_QUEUE,
             JOB_NAME,
             SUCCEEDED_JOB_STATUS,
@@ -143,6 +158,9 @@ class TestRetriever(unittest.TestCase):
     @mock.patch(
         "batch_job_handler_lambda.batch_job_handler.generate_monitoring_message_payload"
     )
+    @mock.patch(
+        "batch_job_handler_lambda.batch_job_handler.get_slack_channel_override"
+    )
     @mock.patch("batch_job_handler_lambda.batch_job_handler.get_notification_type")
     @mock.patch("batch_job_handler_lambda.batch_job_handler.get_severity")
     @mock.patch(
@@ -161,6 +179,7 @@ class TestRetriever(unittest.TestCase):
         get_and_validate_job_details_mock,
         get_severity_mock,
         get_notification_type_mock,
+        get_slack_channel_override_mock,
         generate_monitoring_message_payload_mock,
         send_sns_message_mock,
     ):
@@ -213,6 +232,58 @@ class TestRetriever(unittest.TestCase):
 
         actual_payload = batch_job_handler.generate_monitoring_message_payload(
             {},
+            None,
+            PDM_JOB_QUEUE,
+            JOB_NAME,
+            FAILED_JOB_STATUS,
+            CRITICAL_SEVERITY,
+            INFORMATION_NOTIFICATION_TYPE,
+        )
+
+        get_friendly_name_mock.assert_called_once_with(
+            PDM_JOB_QUEUE,
+            JOB_NAME,
+            FAILED_JOB_STATUS,
+        )
+
+        generate_custom_elements_mock.assert_called_once_with(
+            {},
+            PDM_JOB_QUEUE,
+            JOB_NAME,
+            FAILED_JOB_STATUS,
+        )
+
+        self.assertEqual(expected_payload, actual_payload)
+
+    @mock.patch("batch_job_handler_lambda.batch_job_handler.get_friendly_name")
+    @mock.patch("batch_job_handler_lambda.batch_job_handler.generate_custom_elements")
+    @mock.patch("batch_job_handler_lambda.batch_job_handler.logger")
+    def test_sns_payload_generates_valid_payload_with_overriden_slack_channel(
+        self,
+        mock_logger,
+        generate_custom_elements_mock,
+        get_friendly_name_mock,
+    ):
+        custom_elements = [
+            {"key": "Job name", "value": JOB_NAME},
+            {"key": "Job queue", "value": PDM_JOB_QUEUE},
+        ]
+        generate_custom_elements_mock.return_value = custom_elements
+
+        get_friendly_name_mock.return_value = "Test job"
+
+        expected_payload = {
+            "severity": CRITICAL_SEVERITY,
+            "notification_type": INFORMATION_NOTIFICATION_TYPE,
+            "slack_username": "AWS Batch Job Notification",
+            "title_text": "Test job changed to FAILED",
+            "custom_elements": custom_elements,
+            "slack_channel_override": MOCK_CHANNEL,
+        }
+
+        actual_payload = batch_job_handler.generate_monitoring_message_payload(
+            {},
+            MOCK_CHANNEL,
             PDM_JOB_QUEUE,
             JOB_NAME,
             FAILED_JOB_STATUS,
@@ -536,6 +607,39 @@ class TestRetriever(unittest.TestCase):
         expected = "Batch job"
         actual = batch_job_handler.get_friendly_name(
             OTHER_JOB_QUEUE,
+            JOB_NAME,
+            FAILED_JOB_STATUS,
+        )
+        self.assertEqual(expected, actual)
+
+    @mock.patch("batch_job_handler_lambda.batch_job_handler.logger")
+    def test_get_slack_channel_override_returns_none_when_not_set(self, mock_logger):
+        expected = None
+        actual = batch_job_handler.get_slack_channel_override(
+            "NOT_SET",
+            COALECSER_JOB_QUEUE,
+            JOB_NAME,
+            FAILED_JOB_STATUS,
+        )
+        self.assertEqual(expected, actual)
+
+    @mock.patch("batch_job_handler_lambda.batch_job_handler.logger")
+    def test_get_slack_channel_override_returns_none_for_non_overriden_queue(self, mock_logger):
+        expected = None
+        actual = batch_job_handler.get_slack_channel_override(
+            "NOT_SET",
+            OTHER_JOB_QUEUE,
+            JOB_NAME,
+            FAILED_JOB_STATUS,
+        )
+        self.assertEqual(expected, actual)
+
+    @mock.patch("batch_job_handler_lambda.batch_job_handler.logger")
+    def test_get_slack_channel_override_returns_override_for_coalescer_queue(self, mock_logger):
+        expected = MOCK_CHANNEL
+        actual = batch_job_handler.get_slack_channel_override(
+            MOCK_CHANNEL,
+            COALECSER_JOB_QUEUE,
             JOB_NAME,
             FAILED_JOB_STATUS,
         )
