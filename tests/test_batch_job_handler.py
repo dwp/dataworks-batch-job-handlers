@@ -53,9 +53,7 @@ class TestRetriever(unittest.TestCase):
     @mock.patch(
         "batch_job_handler_lambda.batch_job_handler.generate_monitoring_message_payload"
     )
-    @mock.patch(
-        "batch_job_handler_lambda.batch_job_handler.get_slack_channel_override"
-    )
+    @mock.patch("batch_job_handler_lambda.batch_job_handler.get_slack_channel_override")
     @mock.patch("batch_job_handler_lambda.batch_job_handler.get_notification_type")
     @mock.patch("batch_job_handler_lambda.batch_job_handler.get_severity")
     @mock.patch(
@@ -158,9 +156,7 @@ class TestRetriever(unittest.TestCase):
     @mock.patch(
         "batch_job_handler_lambda.batch_job_handler.generate_monitoring_message_payload"
     )
-    @mock.patch(
-        "batch_job_handler_lambda.batch_job_handler.get_slack_channel_override"
-    )
+    @mock.patch("batch_job_handler_lambda.batch_job_handler.get_slack_channel_override")
     @mock.patch("batch_job_handler_lambda.batch_job_handler.get_notification_type")
     @mock.patch("batch_job_handler_lambda.batch_job_handler.get_severity")
     @mock.patch(
@@ -624,7 +620,9 @@ class TestRetriever(unittest.TestCase):
         self.assertEqual(expected, actual)
 
     @mock.patch("batch_job_handler_lambda.batch_job_handler.logger")
-    def test_get_slack_channel_override_returns_none_for_non_overriden_queue(self, mock_logger):
+    def test_get_slack_channel_override_returns_none_for_non_overriden_queue(
+        self, mock_logger
+    ):
         expected = None
         actual = batch_job_handler.get_slack_channel_override(
             "NOT_SET",
@@ -635,7 +633,9 @@ class TestRetriever(unittest.TestCase):
         self.assertEqual(expected, actual)
 
     @mock.patch("batch_job_handler_lambda.batch_job_handler.logger")
-    def test_get_slack_channel_override_returns_override_for_coalescer_queue(self, mock_logger):
+    def test_get_slack_channel_override_returns_override_for_coalescer_queue(
+        self, mock_logger
+    ):
         expected = MOCK_CHANNEL
         actual = batch_job_handler.get_slack_channel_override(
             MOCK_CHANNEL,
