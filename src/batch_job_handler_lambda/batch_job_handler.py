@@ -242,7 +242,7 @@ def generate_monitoring_message_payload(
         "custom_elements": custom_elements,
     }
 
-    if slack_channel_override is not None:
+    if slack_channel_override is not None and notification_type == INFORMATION_NOTIFICATION_TYPE:
         payload["slack_channel_override"] = slack_channel_override
 
     dumped_payload = get_escaped_json_string(payload)

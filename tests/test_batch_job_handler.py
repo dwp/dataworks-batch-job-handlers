@@ -258,6 +258,56 @@ class TestRetriever(unittest.TestCase):
     @mock.patch("batch_job_handler_lambda.batch_job_handler.get_friendly_name")
     @mock.patch("batch_job_handler_lambda.batch_job_handler.generate_custom_elements")
     @mock.patch("batch_job_handler_lambda.batch_job_handler.logger")
+    def test_sns_payload_generates_valid_payload_with_no_override_for_non_information_types(
+        self,
+        mock_logger,
+        generate_custom_elements_mock,
+        get_friendly_name_mock,
+    ):
+        custom_elements = [
+            {"key": "Job name", "value": JOB_NAME},
+            {"key": "Job queue", "value": PDM_JOB_QUEUE},
+        ]
+        generate_custom_elements_mock.return_value = custom_elements
+
+        get_friendly_name_mock.return_value = "Test job"
+
+        expected_payload = {
+            "severity": CRITICAL_SEVERITY,
+            "notification_type": WARNING_NOTIFICATION_TYPE,
+            "slack_username": "AWS Batch Job Notification",
+            "title_text": "Test job changed to FAILED",
+            "custom_elements": custom_elements,
+        }
+
+        actual_payload = batch_job_handler.generate_monitoring_message_payload(
+            {},
+            MOCK_CHANNEL,
+            PDM_JOB_QUEUE,
+            JOB_NAME,
+            FAILED_JOB_STATUS,
+            CRITICAL_SEVERITY,
+            WARNING_NOTIFICATION_TYPE,
+        )
+
+        get_friendly_name_mock.assert_called_once_with(
+            PDM_JOB_QUEUE,
+            JOB_NAME,
+            FAILED_JOB_STATUS,
+        )
+
+        generate_custom_elements_mock.assert_called_once_with(
+            {},
+            PDM_JOB_QUEUE,
+            JOB_NAME,
+            FAILED_JOB_STATUS,
+        )
+
+        self.assertEqual(expected_payload, actual_payload)
+
+    @mock.patch("batch_job_handler_lambda.batch_job_handler.get_friendly_name")
+    @mock.patch("batch_job_handler_lambda.batch_job_handler.generate_custom_elements")
+    @mock.patch("batch_job_handler_lambda.batch_job_handler.logger")
     def test_sns_payload_generates_valid_payload_with_overriden_slack_channel(
         self,
         mock_logger,
