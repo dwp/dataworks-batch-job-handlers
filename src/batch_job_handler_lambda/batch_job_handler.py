@@ -95,7 +95,11 @@ def get_parameters():
     parser.add_argument("--sns-topic", help="SNS topic ARN")
     parser.add_argument("--environment", help="Environment value", default=UNSET_TEXT)
     parser.add_argument("--application", help="Application", default=UNSET_TEXT)
-    parser.add_argument("--slack-channel-override", help="Slack channel to use for overriden jobs", default=UNSET_TEXT)
+    parser.add_argument(
+        "--slack-channel-override",
+        help="Slack channel to use for overriden jobs",
+        default=UNSET_TEXT,
+    )
     parser.add_argument("--log-level", help="Log level for lambda", default="INFO")
 
     _args = parser.parse_args()
