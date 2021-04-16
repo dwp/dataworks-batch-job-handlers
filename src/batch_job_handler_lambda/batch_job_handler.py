@@ -335,7 +335,9 @@ def get_slack_channel_override(
         )
         return None
 
-    if REGEX_COALESCER_JOB_QUEUE_ARN.match(job_queue) or REGEX_TRIMMER_JOB_QUEUE_ARN.match(job_queue):
+    if REGEX_COALESCER_JOB_QUEUE_ARN.match(
+        job_queue
+    ) or REGEX_TRIMMER_JOB_QUEUE_ARN.match(job_queue):
         logger.info(
             f'Using slack channel override for job", "slack_channel_override": "{slack_channel_override}", '
             + f'"job_queue": "{job_queue}", "job_name": "{job_name}", "job_status": "{job_status}'
