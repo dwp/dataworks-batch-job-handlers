@@ -282,7 +282,18 @@ def get_friendly_name(
     friendly_name = "Batch job"
 
     if REGEX_PDM_OBJECT_TAGGING_JOB_QUEUE_ARN.match(job_queue):
-        friendly_name = "PDM object tagger"
+        if "_pt_1" in job_name.lower():
+            friendly_name = "PT-1 object tagger"
+        elif "_pt_2" in job_name.lower():
+            friendly_name = "PT-2 object tagger"
+        elif "pt-" in job_name.lower():
+            friendly_name = "PT object tagger"
+        elif "clive" in job_name.lower():
+            friendly_name = "Clive object tagger"
+        elif "pdm" in job_name.lower():
+            friendly_name = "PDM object tagger"
+        else:
+            friendly_name = "Object tagger"
     elif REGEX_UCFS_CLAIMANT_JOB_QUEUE_ARN.match(job_queue):
         friendly_name = "UCFS claimant data load"
     elif REGEX_TRIMMER_JOB_QUEUE_ARN.match(job_queue):
@@ -324,9 +335,11 @@ def get_slack_channel_override(
         )
         return None
 
-    if REGEX_COALESCER_JOB_QUEUE_ARN.match(job_queue):
+    if REGEX_COALESCER_JOB_QUEUE_ARN.match(
+        job_queue
+    ) or REGEX_TRIMMER_JOB_QUEUE_ARN.match(job_queue):
         logger.info(
-            f'Using slack channel override for coalescer job", "slack_channel_override": "{slack_channel_override}", '
+            f'Using slack channel override for job", "slack_channel_override": "{slack_channel_override}", '
             + f'"job_queue": "{job_queue}", "job_name": "{job_name}", "job_status": "{job_status}'
         )
         return slack_channel_override
