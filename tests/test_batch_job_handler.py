@@ -692,7 +692,9 @@ class TestRetriever(unittest.TestCase):
         self.assertEqual(expected, actual)
 
     @mock.patch("batch_job_handler_lambda.batch_job_handler.logger")
-    def test_get_friendly_name_returns_pt_1_matched_name_with_pt_job_queue(self, mock_logger):
+    def test_get_friendly_name_returns_pt_1_matched_name_with_pt_job_queue(
+        self, mock_logger
+    ):
         expected = "PT-1 object tagger"
         actual = batch_job_handler.get_friendly_name(
             PT_JOB_QUEUE,
