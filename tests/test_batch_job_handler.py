@@ -37,6 +37,7 @@ MEDIUM_SEVERITY = "Medium"
 TRIMMER_JOB_QUEUE = "test/k2hb_reconciliation_trimmer"
 COALECSER_JOB_QUEUE = "test/batch_corporate_storage_coalescer"
 PDM_JOB_QUEUE = "test/pdm_object_tagger"
+PT_JOB_QUEUE = "test/pt_object_tagger"
 OTHER_JOB_QUEUE = "test_queue"
 JOB_NAME = "test job"
 
@@ -460,6 +461,17 @@ class TestRetriever(unittest.TestCase):
         self.assertEqual(expected, actual)
 
     @mock.patch("batch_job_handler_lambda.batch_job_handler.logger")
+    def test_get_severity_returns_high_for_succeeded_pt_job(self, mock_logger):
+        expected = HIGH_SEVERITY
+        actual = batch_job_handler.get_severity(
+            PT_JOB_QUEUE,
+            SUCCEEDED_JOB_STATUS,
+            JOB_NAME,
+        )
+
+        self.assertEqual(expected, actual)
+
+    @mock.patch("batch_job_handler_lambda.batch_job_handler.logger")
     def test_get_severity_returns_high_for_succeeded_other_job(self, mock_logger):
         expected = HIGH_SEVERITY
         actual = batch_job_handler.get_severity(
@@ -674,6 +686,18 @@ class TestRetriever(unittest.TestCase):
         expected = "PT-1 object tagger"
         actual = batch_job_handler.get_friendly_name(
             PDM_JOB_QUEUE,
+            "pdm_Pt_1_job-name",
+            FAILED_JOB_STATUS,
+        )
+        self.assertEqual(expected, actual)
+
+    @mock.patch("batch_job_handler_lambda.batch_job_handler.logger")
+    def test_get_friendly_name_returns_pt_1_matched_name_with_pt_job_queue(
+        self, mock_logger
+    ):
+        expected = "PT-1 object tagger"
+        actual = batch_job_handler.get_friendly_name(
+            PT_JOB_QUEUE,
             "pdm_Pt_1_job-name",
             FAILED_JOB_STATUS,
         )

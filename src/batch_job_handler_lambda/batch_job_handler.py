@@ -39,7 +39,7 @@ CRITICAL_SEVERITY = "Critical"
 HIGH_SEVERITY = "High"
 MEDIUM_SEVERITY = "Medium"
 
-REGEX_PDM_OBJECT_TAGGING_JOB_QUEUE_ARN = re.compile("^.*/pdm_object_tagger$")
+REGEX_OBJECT_TAGGING_JOB_QUEUE_ARN = re.compile("^.*/.*_object_tagger$")
 REGEX_UCFS_CLAIMANT_JOB_QUEUE_ARN = re.compile("^.*/ucfs_claimant_api$")
 REGEX_TRIMMER_JOB_QUEUE_ARN = re.compile("^.*/k2hb_reconciliation_trimmer$")
 REGEX_COALESCER_JOB_QUEUE_ARN = re.compile("^.*/batch_corporate_storage_coalescer$")
@@ -281,7 +281,7 @@ def get_friendly_name(
 
     friendly_name = "Batch job"
 
-    if REGEX_PDM_OBJECT_TAGGING_JOB_QUEUE_ARN.match(job_queue):
+    if REGEX_OBJECT_TAGGING_JOB_QUEUE_ARN.match(job_queue):
         if "_pt_1" in job_name.lower():
             friendly_name = "PT-1 object tagger"
         elif "_pt_2" in job_name.lower():
@@ -474,7 +474,7 @@ def get_severity(job_queue, job_status, job_name):
     elif job_status in [FAILED_JOB_STATUS]:
         severity = (
             CRITICAL_SEVERITY
-            if REGEX_PDM_OBJECT_TAGGING_JOB_QUEUE_ARN.match(job_queue)
+            if REGEX_OBJECT_TAGGING_JOB_QUEUE_ARN.match(job_queue)
             else HIGH_SEVERITY
         )
 
@@ -499,7 +499,7 @@ def get_notification_type(job_queue, job_status, job_name):
     if job_status in [FAILED_JOB_STATUS]:
         notification_type = (
             ERROR_NOTIFICATION_TYPE
-            if REGEX_PDM_OBJECT_TAGGING_JOB_QUEUE_ARN.match(job_queue)
+            if REGEX_OBJECT_TAGGING_JOB_QUEUE_ARN.match(job_queue)
             else WARNING_NOTIFICATION_TYPE
         )
 
