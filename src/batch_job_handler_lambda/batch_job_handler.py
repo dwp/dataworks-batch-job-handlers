@@ -42,7 +42,7 @@ MEDIUM_SEVERITY = "Medium"
 REGEX_OBJECT_TAGGING_JOB_QUEUE_ARN = re.compile("^.*/.*_object_tagger$")
 REGEX_UCFS_CLAIMANT_JOB_QUEUE_ARN = re.compile("^.*/ucfs_claimant_api$")
 REGEX_TRIMMER_JOB_QUEUE_ARN = re.compile("^.*/k2hb_reconciliation_trimmer$")
-REGEX_COALESCER_JOB_QUEUE_ARN = re.compile("^.*/batch_corporate_storage_coalescer$")
+REGEX_COALESCER_JOB_QUEUE_ARN = re.compile("^.*/batch_corporate_storage_coalescer.*$")
 
 args = None
 logger = None
