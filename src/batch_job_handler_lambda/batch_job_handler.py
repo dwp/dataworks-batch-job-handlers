@@ -292,6 +292,8 @@ def get_friendly_name(
             friendly_name = "Clive object tagger"
         elif "pdm" in job_name.lower():
             friendly_name = "PDM object tagger"
+        elif "uc-feature" in job_name.lower():
+            friendly_name = "UC feature object tagger"
         else:
             friendly_name = "Object tagger"
     elif REGEX_UCFS_CLAIMANT_JOB_QUEUE_ARN.match(job_queue):
