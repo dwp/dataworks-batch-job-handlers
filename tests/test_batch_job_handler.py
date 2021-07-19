@@ -662,6 +662,16 @@ class TestRetriever(unittest.TestCase):
         self.assertEqual(expected, actual)
 
     @mock.patch("batch_job_handler_lambda.batch_job_handler.logger")
+    def test_get_friendly_name_returns_uc_feature_matched_name(self, mock_logger):
+        expected = "UC feature object tagger"
+        actual = batch_job_handler.get_friendly_name(
+            PDM_JOB_QUEUE,
+            "uc-feature-test-job-name",
+            FAILED_JOB_STATUS,
+        )
+        self.assertEqual(expected, actual)
+
+    @mock.patch("batch_job_handler_lambda.batch_job_handler.logger")
     def test_get_friendly_name_returns_clive_matched_name(self, mock_logger):
         expected = "Clive object tagger"
         actual = batch_job_handler.get_friendly_name(
