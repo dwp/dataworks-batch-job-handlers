@@ -36,6 +36,7 @@ MEDIUM_SEVERITY = "Medium"
 
 TRIMMER_JOB_QUEUE = "test/k2hb_reconciliation_trimmer"
 COALECSER_JOB_QUEUE = "test/batch_corporate_storage_coalescer"
+KAFKA_JOB_QUEUE = "test/kafka-reconciliation"
 PDM_JOB_QUEUE = "test/pdm_object_tagger"
 PT_JOB_QUEUE = "test/pt_object_tagger"
 OTHER_JOB_QUEUE = "test_queue"
@@ -662,16 +663,6 @@ class TestRetriever(unittest.TestCase):
         self.assertEqual(expected, actual)
 
     @mock.patch("batch_job_handler_lambda.batch_job_handler.logger")
-    def test_get_friendly_name_returns_uc_feature_matched_name(self, mock_logger):
-        expected = "UC feature object tagger"
-        actual = batch_job_handler.get_friendly_name(
-            PDM_JOB_QUEUE,
-            "uc-feature-test-job-name",
-            FAILED_JOB_STATUS,
-        )
-        self.assertEqual(expected, actual)
-
-    @mock.patch("batch_job_handler_lambda.batch_job_handler.logger")
     def test_get_friendly_name_returns_clive_matched_name(self, mock_logger):
         expected = "Clive object tagger"
         actual = batch_job_handler.get_friendly_name(
@@ -719,6 +710,16 @@ class TestRetriever(unittest.TestCase):
         actual = batch_job_handler.get_friendly_name(
             PDM_JOB_QUEUE,
             "pdm_Pt_2_job-name",
+            FAILED_JOB_STATUS,
+        )
+        self.assertEqual(expected, actual)
+
+    @mock.patch("batch_job_handler_lambda.batch_job_handler.logger")
+    def test_get_friendly_name_returns_kafka_matched_name(self, mock_logger):
+        expected = "Kafka reconciliation batch"
+        actual = batch_job_handler.get_friendly_name(
+            KAFKA_JOB_QUEUE,
+            "kafka_job_name",
             FAILED_JOB_STATUS,
         )
         self.assertEqual(expected, actual)
@@ -788,6 +789,19 @@ class TestRetriever(unittest.TestCase):
         actual = batch_job_handler.get_slack_channel_override(
             MOCK_CHANNEL,
             TRIMMER_JOB_QUEUE,
+            JOB_NAME,
+            FAILED_JOB_STATUS,
+        )
+        self.assertEqual(expected, actual)
+
+    @mock.patch("batch_job_handler_lambda.batch_job_handler.logger")
+    def test_get_slack_channel_override_returns_override_for_kafka_queue(
+        self, mock_logger
+    ):
+        expected = MOCK_CHANNEL
+        actual = batch_job_handler.get_slack_channel_override(
+            MOCK_CHANNEL,
+            KAFKA_JOB_QUEUE,
             JOB_NAME,
             FAILED_JOB_STATUS,
         )
