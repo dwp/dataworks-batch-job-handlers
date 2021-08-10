@@ -43,6 +43,7 @@ REGEX_OBJECT_TAGGING_JOB_QUEUE_ARN = re.compile("^.*/.*_object_tagger$")
 REGEX_UCFS_CLAIMANT_JOB_QUEUE_ARN = re.compile("^.*/ucfs_claimant_api$")
 REGEX_TRIMMER_JOB_QUEUE_ARN = re.compile("^.*/k2hb_reconciliation_trimmer$")
 REGEX_COALESCER_JOB_QUEUE_ARN = re.compile("^.*/batch_corporate_storage_coalescer.*$")
+REGEX_KAFKA_RECONCILIATION_JOB_QUEUE_ARN = re.compile("^.*/kafka-reconciliation$")
 
 args = None
 logger = None
@@ -292,8 +293,6 @@ def get_friendly_name(
             friendly_name = "Clive object tagger"
         elif "pdm" in job_name.lower():
             friendly_name = "PDM object tagger"
-        elif "uc-feature" in job_name.lower():
-            friendly_name = "UC feature object tagger"
         else:
             friendly_name = "Object tagger"
     elif REGEX_UCFS_CLAIMANT_JOB_QUEUE_ARN.match(job_queue):
@@ -302,6 +301,8 @@ def get_friendly_name(
         friendly_name = "K2HB trimmer"
     elif REGEX_COALESCER_JOB_QUEUE_ARN.match(job_queue):
         friendly_name = "Batch coalescer"
+    elif REGEX_KAFKA_RECONCILIATION_JOB_QUEUE_ARN.match(job_queue):
+        friendly_name = "Kafka reconciliation batch"
 
     logger.info(
         f'Generated job queue friendly name", "friendly_name": "{friendly_name}", '
@@ -338,6 +339,8 @@ def get_slack_channel_override(
         return None
 
     if REGEX_COALESCER_JOB_QUEUE_ARN.match(
+        job_queue
+    ) or REGEX_KAFKA_RECONCILIATION_JOB_QUEUE_ARN.match(
         job_queue
     ) or REGEX_TRIMMER_JOB_QUEUE_ARN.match(job_queue):
         logger.info(
