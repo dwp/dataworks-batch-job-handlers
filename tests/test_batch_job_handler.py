@@ -693,6 +693,16 @@ class TestRetriever(unittest.TestCase):
         self.assertEqual(expected, actual)
 
     @mock.patch("batch_job_handler_lambda.batch_job_handler.logger")
+    def test_get_friendly_name_returns_pmongo_latest_matched_name(self, mock_logger):
+        expected = "PT-1 object tagger"
+        actual = batch_job_handler.get_friendly_name(
+            PDM_JOB_QUEUE,
+            "mongo-latest_job-name",
+            FAILED_JOB_STATUS,
+        )
+        self.assertEqual(expected, actual)
+
+    @mock.patch("batch_job_handler_lambda.batch_job_handler.logger")
     def test_get_friendly_name_returns_pt_1_matched_name_with_pt_job_queue(
         self, mock_logger
     ):

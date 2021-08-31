@@ -283,7 +283,7 @@ def get_friendly_name(
     friendly_name = "Batch job"
 
     if REGEX_OBJECT_TAGGING_JOB_QUEUE_ARN.match(job_queue):
-        if "_pt_1" in job_name.lower():
+        if "_pt_1" in job_name.lower() or "mongo-latest" in job_name.lower():
             friendly_name = "PT-1 object tagger"
         elif "_pt_2" in job_name.lower():
             friendly_name = "PT-2 object tagger"
