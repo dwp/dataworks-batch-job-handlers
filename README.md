@@ -1,3 +1,5 @@
+# DO NOT USE THIS REPO - MIGRATED TO GITLAB
+
 # dataworks-batch-job-handlers
 
 ## An AWS lambda which receives SNS messages from batch job status changes and handles them.

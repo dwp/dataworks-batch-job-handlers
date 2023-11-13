@@ -390,7 +390,7 @@ def generate_custom_elements(
             {"key": "Job status reason", "value": detail_dict[JOB_STATUS_REASON_KEY]}
         )
 
-    for (time_key, time_name) in OPTIONAL_TIME_KEYS:
+    for time_key, time_name in OPTIONAL_TIME_KEYS:
         if time_key in detail_dict and detail_dict[time_key]:
             timestamp = datetime.datetime.fromtimestamp(detail_dict[time_key] / 1000)
             timestamp_string = timestamp.strftime("%Y-%m-%dT%H:%M:%S")
